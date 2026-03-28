@@ -1,0 +1,316 @@
+/*
+ * index.css
+ * ─────────────────────────────────────────────────────────────────
+ * Estilos globales del Morse Koch Trainer.
+ * 
+ * ── Estética ─────────────────────────────────────────────────────
+ * Diseño industrial/CW: dark mode con acentos ámbar/naranja,
+ * tipografía monoespaciada para los grupos Morse,
+ * y tipografía condensada para la UI.
+ * 
+ * La fuente monoespaciada "IBM Plex Mono" es perfecta para CW:
+ * - Cada carácter tiene el mismo ancho → fácil comparar sent vs received
+ * - Tipografía asociada a radio y telecomunicaciones
+ * - Muy legible en pantallas oscuras
+ * ─────────────────────────────────────────────────────────────────
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Barlow+Condensed:wght@300;400;500;600;700&family=Barlow:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+
+/* ── Variables del design system ─────────────────────────────── */
+/* Fáciles de cambiar para el branding del Radio Club Córdoba */
+:root {
+  /* Colores primarios */
+  --color-bg:        #0a0a0a;      /* Negro casi puro — fondo principal */
+  --color-surface:   #111111;      /* Superficies elevadas (cards, panels) */
+  --color-surface-2: #1a1a1a;      /* Superficies de nivel 2 */
+  --color-border:    #2a2a2a;      /* Bordes sutiles */
+  --color-border-2:  #3a3a3a;      /* Bordes más visibles */
+
+  /* Colores de acento — ámbar CW (asociado con pantallas de radio vintage) */
+  --color-accent:    #f59e0b;      /* Ámbar principal */
+  --color-accent-2:  #fbbf24;      /* Ámbar más claro (hover) */
+  --color-accent-dim: #92400e;     /* Ámbar oscuro (fondo de badges) */
+
+  /* Colores de texto */
+  --color-text-primary:   #f0f0f0; /* Texto principal */
+  --color-text-secondary: #9a9a9a; /* Texto secundario */
+  --color-text-muted:     #555555; /* Texto apagado */
+
+  /* Colores de feedback */
+  --color-correct: #22c55e;  /* Verde — respuesta correcta */
+  --color-error:   #ef4444;  /* Rojo — respuesta incorrecta */
+  --color-warning: #f59e0b;  /* Ámbar — advertencia */
+
+  /* Tipografías */
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  --font-ui:   'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --font-body: 'Barlow', Arial, sans-serif;
+}
+
+/* ── Reset y base ──────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Prevenir text selection accidental durante sesiones */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Permitir selección en inputs y textareas */
+input, textarea, [contenteditable] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Scrollbar personalizado ─────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-2);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ── Tipografía Morse ─────────────────────────────────────────── */
+/* Clase para mostrar grupos CW — siempre monoespaciada y grande */
+.morse-text {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.morse-xl  { font-size: clamp(2rem, 5vw, 4rem); }
+.morse-lg  { font-size: clamp(1.5rem, 4vw, 3rem); }
+.morse-md  { font-size: clamp(1.2rem, 3vw, 2rem); }
+.morse-sm  { font-size: clamp(1rem, 2vw, 1.5rem); }
+
+/* ── UI Components ────────────────────────────────────────────── */
+.font-ui   { font-family: var(--font-ui); }
+.font-mono { font-family: var(--font-mono); }
+
+/* Input de respuesta durante la sesión */
+.response-input {
+  font-family: var(--font-mono);
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--color-accent);
+  caret-color: var(--color-accent);
+  width: 100%;
+  text-align: center;
+}
+
+/* Animación del pulso del indicador de audio */
+@keyframes audio-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.92); }
+}
+
+.audio-pulse {
+  animation: audio-pulse 0.6s ease-in-out infinite;
+}
+
+/* Animación del dot del indicador de transmisión */
+@keyframes transmit-dot {
+  0%   { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+  70%  { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+
+.transmit-pulse {
+  animation: transmit-dot 1s ease-out infinite;
+}
+
+/* Animación de entrada para el feedback */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+  animation: slide-up 0.2s ease-out forwards;
+}
+
+/* Barra de progreso animada */
+@keyframes progress-fill {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
+/* Efecto de scan line sutil para estética de terminal/radio */
+@keyframes scanline {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+/* ── Clases de feedback (sent vs received) ────────────────────── */
+.char-correct {
+  color: var(--color-correct);
+}
+.char-error {
+  color: var(--color-error);
+  text-decoration: underline;
+  text-decoration-color: var(--color-error);
+  text-decoration-thickness: 2px;
+}
+.char-missing {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+/* ── Botones ──────────────────────────────────────────────────── */
+.btn-primary {
+  background: var(--color-accent);
+  color: #000;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.btn-primary:hover {
+  background: var(--color-accent-2);
+}
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.65rem 1.5rem;
+  border: 1px solid var(--color-border-2);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.btn-secondary:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-text-muted);
+  background: var(--color-surface-2);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.btn-ghost:hover {
+  color: var(--color-text-primary);
+  background: var(--color-surface-2);
+}
+
+/* ── Range inputs (sliders) ───────────────────────────────────── */
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+}
+input[type=range]::-webkit-slider-runnable-track {
+  background: var(--color-border-2);
+  height: 3px;
+  border-radius: 2px;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  margin-top: -5.5px;
+  transition: transform 0.1s;
+}
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+input[type=range]:focus {
+  outline: none;
+}
+
+/* ── Checkboxes y toggles ─────────────────────────────────────── */
+input[type=checkbox] {
+  accent-color: var(--color-accent);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* ── Select ───────────────────────────────────────────────────── */
+select {
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-2);
+  border-radius: 2px;
+  padding: 0.4rem 0.6rem;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+select:focus {
+  border-color: var(--color-accent);
+}
+
+/* ── Transitions ──────────────────────────────────────────────── */
+.transition-all {
+  transition: all 0.2s ease;
+}
