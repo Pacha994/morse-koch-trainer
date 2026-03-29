@@ -6,6 +6,10 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(), // Tailwind v4: se integra como plugin de Vite directamente
+    tailwindcss(),
   ],
+  // Base necesario para GitHub Pages:
+  // La app se sirve desde https://pacha994.github.io/morse-koch-trainer/
+  // sin este base, los assets (JS/CSS) no cargan correctamente.
+  base: '/morse-koch-trainer/',
 });
