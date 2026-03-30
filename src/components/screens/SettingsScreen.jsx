@@ -1,40 +1,87 @@
 /**
  * SettingsScreen.jsx
- * Panel de configuración con todos los parámetros de la app.
- * Organizado en secciones colapsables para no abrumar al usuario.
+ * ─────────────────────────────────────────────────────────────────
+ * Pantalla de configuración completa.
+ * Paridad funcional con IZ2UUF Morse Koch CW (Android).
+ *
+ * Controles según el PDF del Radio Club Córdoba:
+ *  - Tipo de ejercicio: lista de opciones
+ *  - WPM: slider con valor visible
+ *  - Unidad de velocidad: WPM / CPM
+ *  - Duración: opciones discretas (no slider continuo)
+ *  - Longitud de grupo: Variable + opciones discretas
+ *  - Koch level: lista de caracteres con código Morse
+ *  - Hard letters: campo de texto libre + grilla de caracteres
+ *  - Espaciado / Timing: opciones discretas
+ *  - Audio: opciones discretas donde IZ2UUF las usa
+ *  - Impresión del grupo + delay
+ *  - Speech / TTS completo
+ *  - Cadena personalizada
+ * ─────────────────────────────────────────────────────────────────
  */
-import React, { useState } from 'react';
+
+import React, { useState, useRef } from 'react';
 import { useSettings } from '../../context/SettingsContext.jsx';
 import { G4FON_ORDER, LCWO_ORDER } from '../../constants/kochSequences.js';
+import { MORSE_CODE } from '../../constants/morseCodes.js';
+import {
+  EXERCISE_TYPES,
+  DURATION_OPTIONS,
+  WORD_LENGTH_OPTIONS,
+  START_PAUSE_OPTIONS,
+  DOT_PITCH_OPTIONS,
+  GROUP_PRINT_DELAY_OPTIONS,
+  CHAR_SPACING_OPTIONS,
+  WORD_SPACING_OPTIONS,
+  DASH_DOT_RATIO_OPTIONS,
+  SIDETONE_OPTIONS,
+  TONE_ENVELOPE_OPTIONS,
+  SPEECH_MODES,
+  SPEECH_LANGS,
+  SPEECH_TIMING_OPTIONS,
+  FONT_SIZE_OPTIONS,
+} from '../../constants/defaults.js';
 
-// ── Sección colapsable ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────
+// Componentes internos de UI
+// ─────────────────────────────────────────────────────────────────
+
+/**
+ * Sección colapsable con título y línea separadora.
+ */
 function Section({ title, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div
-      className="border-b"
-      style={{ borderColor: 'var(--color-border)' }}
-    >
+    <div style={{ borderBottom: '1px solid var(--color-border)' }}>
       <button
-        className="w-full flex items-center justify-between px-6 py-4 text-left"
         onClick={() => setOpen(o => !o)}
-        style={{ background: 'var(--color-surface)' }}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '14px 0',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+        }}
       >
-        <span
-          className="font-ui text-sm font-semibold tracking-widest uppercase"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
+        <span style={{
+          fontFamily: 'var(--font-ui)',
+          fontSize: '11px',
+          fontWeight: 700,
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: 'var(--color-text-muted)',
+        }}>
           {title}
         </span>
-        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>
+        <span style={{ color: 'var(--color-text-muted)', fontSize: '10px' }}>
           {open ? '▲' : '▼'}
         </span>
       </button>
       {open && (
-        <div
-          className="px-6 pb-6 pt-4 space-y-5"
-          style={{ background: 'var(--color-bg)' }}
-        >
+        <div style={{ paddingBottom: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {children}
         </div>
       )}
@@ -42,82 +89,420 @@ function Section({ title, children, defaultOpen = false }) {
   );
 }
 
-// ── Fila de setting individual ─────────────────────────────────────
-function SettingRow({ label, hint, children }) {
+/**
+ * Fila de campo con label, hint opcional y control.
+ */
+function Field({ label, hint, children }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label
-        className="font-ui text-sm font-medium"
-        style={{ color: 'var(--color-text-secondary)' }}
-      >
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <span style={{
+        fontFamily: 'var(--font-ui)',
+        fontSize: '14px',
+        fontWeight: 600,
+        color: 'var(--color-text-secondary)',
+      }}>
         {label}
-      </label>
+      </span>
       {hint && (
-        <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+        <span style={{
+          fontSize: '13px',
+          color: 'var(--color-text-muted)',
+          lineHeight: 1.4,
+        }}>
           {hint}
-        </p>
+        </span>
       )}
       {children}
     </div>
   );
 }
 
-// ── Slider con valor numérico mostrado ─────────────────────────────
-function SliderSetting({ value, min, max, step = 1, onChange, unit = '' }) {
+/**
+ * Grilla de botones de opción (radio visual).
+ * Cada opción tiene value y label.
+ */
+function OptionGrid({ options, value, onChange, columns = 3 }) {
   return (
-    <div className="flex items-center gap-3">
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: `repeat(${columns}, 1fr)`,
+      gap: '6px',
+    }}>
+      {options.map(opt => {
+        const active = opt.value === value;
+        return (
+          <button
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            style={{
+              padding: '8px 4px',
+              fontFamily: 'var(--font-ui)',
+              fontSize: '13px',
+              fontWeight: active ? 700 : 500,
+              border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border-2)'}`,
+              borderRadius: '2px',
+              background: active ? 'var(--color-accent)' : 'var(--color-surface-2)',
+              color: active ? '#000' : 'var(--color-text-secondary)',
+              cursor: 'pointer',
+              transition: 'all 0.12s',
+              textAlign: 'center',
+              lineHeight: 1.3,
+            }}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Toggle entre dos opciones (WPM / CPM).
+ */
+function Toggle({ options, value, onChange }) {
+  return (
+    <div style={{ display: 'flex', gap: '6px' }}>
+      {options.map(opt => {
+        const active = opt.value === value;
+        return (
+          <button
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            style={{
+              flex: 1,
+              padding: '9px 0',
+              fontFamily: 'var(--font-ui)',
+              fontSize: '14px',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border-2)'}`,
+              borderRadius: '2px',
+              background: active ? 'var(--color-accent)' : 'var(--color-surface-2)',
+              color: active ? '#000' : 'var(--color-text-muted)',
+              cursor: 'pointer',
+              transition: 'all 0.12s',
+            }}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Slider de velocidad con valor visible en tiempo real.
+ */
+function SpeedSlider({ value, unit, onChange }) {
+  const min = unit === 'cpm' ? 25 : 5;
+  const max = unit === 'cpm' ? 300 : 60;
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+        <span style={{ fontSize: '13px', color: 'var(--color-text-muted)', fontFamily: 'var(--font-ui)' }}>
+          {min} {unit.toUpperCase()}
+        </span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '22px', fontWeight: 700, color: 'var(--color-accent)' }}>
+          {value} <span style={{ fontSize: '13px', fontWeight: 400 }}>{unit.toUpperCase()}</span>
+        </span>
+        <span style={{ fontSize: '13px', color: 'var(--color-text-muted)', fontFamily: 'var(--font-ui)' }}>
+          {max} {unit.toUpperCase()}
+        </span>
+      </div>
       <input
         type="range"
         min={min}
         max={max}
-        step={step}
+        step={1}
         value={value}
-        onChange={e => onChange(step < 1 ? parseFloat(e.target.value) : parseInt(e.target.value))}
-        className="flex-1"
+        onChange={e => onChange(parseInt(e.target.value))}
+        style={{ width: '100%' }}
       />
-      <span
-        className="font-mono text-sm w-16 text-right flex-shrink-0"
-        style={{ color: 'var(--color-accent)' }}
-      >
-        {value}{unit}
+    </div>
+  );
+}
+
+/**
+ * Koch level: lista de caracteres de la secuencia activa,
+ * cada uno con su código Morse visible.
+ * Se selecciona hasta qué carácter querés llegar.
+ */
+function KochLevelSelector({ sequence, level, onChange }) {
+  return (
+    <div style={{
+      border: '1px solid var(--color-border)',
+      borderRadius: '2px',
+      maxHeight: '260px',
+      overflowY: 'auto',
+    }}>
+      {sequence.map((char, idx) => {
+        const thisLevel = idx + 1;
+        // Solo mostrar hasta nivel 2 como mínimo seleccionable
+        const selectable = thisLevel >= 2;
+        const isSelected = thisLevel === level;
+        const isActive   = thisLevel <= level;
+
+        return (
+          <button
+            key={char}
+            onClick={() => selectable && onChange(thisLevel)}
+            disabled={!selectable}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '9px 14px',
+              background: isSelected
+                ? 'var(--color-accent-dim)'
+                : isActive
+                  ? 'var(--color-surface)'
+                  : 'var(--color-bg)',
+              borderBottom: '1px solid var(--color-border)',
+              border: 'none',
+              borderBottom: idx < sequence.length - 1 ? '1px solid var(--color-border)' : 'none',
+              cursor: selectable ? 'pointer' : 'default',
+              textAlign: 'left',
+              opacity: selectable ? 1 : 0.35,
+            }}
+          >
+            {/* Indicador visual de seleccionado */}
+            <div style={{
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              flexShrink: 0,
+              background: isSelected
+                ? 'var(--color-accent)'
+                : isActive
+                  ? 'var(--color-border-2)'
+                  : 'transparent',
+              border: `1px solid ${isActive ? 'var(--color-accent)' : 'var(--color-border-2)'}`,
+            }} />
+
+            {/* Número de nivel */}
+            <span style={{
+              fontFamily: 'var(--font-ui)',
+              fontSize: '11px',
+              color: 'var(--color-text-muted)',
+              width: '18px',
+              flexShrink: 0,
+            }}>
+              {thisLevel}
+            </span>
+
+            {/* Carácter */}
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '16px',
+              fontWeight: 700,
+              color: isSelected
+                ? 'var(--color-accent)'
+                : isActive
+                  ? 'var(--color-text-primary)'
+                  : 'var(--color-text-muted)',
+              width: '20px',
+              flexShrink: 0,
+            }}>
+              {char}
+            </span>
+
+            {/* Código Morse */}
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '14px',
+              letterSpacing: '0.12em',
+              color: isSelected
+                ? 'var(--color-accent)'
+                : 'var(--color-text-muted)',
+            }}>
+              {MORSE_CODE[char] ?? ''}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Hard letters:
+ *  - Campo de texto libre: escribís las letras que querés marcar
+ *  - Grilla de todos los caracteres del nivel activo para seleccionar con click
+ * Ambos controles están sincronizados.
+ */
+function HardLettersEditor({ activeChars, hardLetters, onChange }) {
+  const inputRef = useRef(null);
+
+  // Construir string de display desde el array
+  const displayText = hardLetters.join('');
+
+  // Cuando el usuario edita el campo de texto, parsear las letras válidas
+  function handleTextChange(e) {
+    const raw = e.target.value.toUpperCase();
+    // Solo conservar caracteres que estén en activeChars, sin duplicados
+    const parsed = [...new Set(raw.split('').filter(c => activeChars.includes(c)))];
+    onChange(parsed);
+  }
+
+  // Toggle individual desde la grilla
+  function toggleChar(char) {
+    if (hardLetters.includes(char)) {
+      onChange(hardLetters.filter(c => c !== char));
+    } else {
+      onChange([...hardLetters, char]);
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      {/* Campo de texto libre */}
+      <input
+        ref={inputRef}
+        type="text"
+        value={displayText}
+        onChange={handleTextChange}
+        placeholder="Escribí las letras que querés practicar más (ej: K M R)"
+        style={{
+          padding: '10px 12px',
+          fontFamily: 'var(--font-mono)',
+          fontSize: '18px',
+          fontWeight: 600,
+          letterSpacing: '0.25em',
+          textTransform: 'uppercase',
+          background: 'var(--color-surface-2)',
+          border: '1px solid var(--color-border-2)',
+          borderRadius: '2px',
+          color: 'var(--color-accent)',
+          outline: 'none',
+          width: '100%',
+        }}
+        onFocus={e => e.target.style.borderColor = 'var(--color-accent)'}
+        onBlur={e => e.target.style.borderColor = 'var(--color-border-2)'}
+      />
+
+      {/* Grilla de todos los caracteres activos */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+        {activeChars.map(char => {
+          const isHard = hardLetters.includes(char);
+          return (
+            <button
+              key={char}
+              onClick={() => toggleChar(char)}
+              title={MORSE_CODE[char] ?? ''}
+              style={{
+                width: '38px',
+                height: '38px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '15px',
+                fontWeight: 700,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '2px',
+                border: `1px solid ${isHard ? 'var(--color-accent)' : 'var(--color-border)'}`,
+                background: isHard ? 'var(--color-accent-dim)' : 'var(--color-surface-2)',
+                color: isHard ? 'var(--color-accent)' : 'var(--color-text-muted)',
+                cursor: 'pointer',
+                transition: 'all 0.1s',
+              }}
+            >
+              {char}
+            </button>
+          );
+        })}
+      </div>
+      <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
+        Los caracteres marcados aparecen con frecuencia ~3× mayor durante el ejercicio.
       </span>
     </div>
   );
 }
 
 /**
- * @param {object}   props
- * @param {Function} props.onClose - Cerrar settings y volver a home
+ * Checkbox con label y hint inline.
  */
+function CheckboxField({ label, hint, checked, onChange }) {
+  return (
+    <label style={{
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '10px',
+      cursor: 'pointer',
+      padding: '10px 12px',
+      background: 'var(--color-surface)',
+      borderRadius: '2px',
+    }}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={e => onChange(e.target.checked)}
+        style={{ marginTop: '2px', flexShrink: 0 }}
+      />
+      <div>
+        <div style={{ fontSize: '14px', fontFamily: 'var(--font-ui)', color: 'var(--color-text-primary)' }}>
+          {label}
+        </div>
+        {hint && (
+          <div style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+            {hint}
+          </div>
+        )}
+      </div>
+    </label>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Pantalla principal
+// ─────────────────────────────────────────────────────────────────
+
 export function SettingsScreen({ onClose }) {
   const { settings, updateSetting, resetToDefaults } = useSettings();
 
-  // Secuencia activa según el tipo de ejercicio
+  // Secuencia Koch activa según el tipo de ejercicio
   const activeSequence = settings.exerciseType === 'koch_lcwo' ? LCWO_ORDER : G4FON_ORDER;
-  const maxLevel       = activeSequence.length;
+  const activeChars    = activeSequence.slice(0, settings.kochLevel);
+
+  // ¿El tipo de ejercicio requiere cadena personalizada?
+  const needsCustomString = [
+    'koch_custom', 'custom_string', 'words_custom',
+    'words_custom_g4fon', 'words_custom_lcwo',
+  ].includes(settings.exerciseType);
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ background: 'var(--color-bg)' }}
-    >
-      {/* ── Header ──────────────────────────────────────────── */}
-      <div
-        className="flex items-center justify-between px-6 py-4 border-b sticky top-0 z-10"
-        style={{
-          borderColor: 'var(--color-border)',
-          background:  'var(--color-surface)',
-        }}
-      >
-        <h1
-          className="font-ui text-xl font-bold tracking-widest uppercase"
-          style={{ color: 'var(--color-text-primary)' }}
-        >
+    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column' }}>
+
+      {/* ── Header ──────────────────────────────────────────────── */}
+      <div style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        background: 'var(--color-surface)',
+        borderBottom: '1px solid var(--color-border)',
+        padding: '14px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <span style={{
+          fontFamily: 'var(--font-ui)',
+          fontSize: '16px',
+          fontWeight: 700,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: 'var(--color-text-primary)',
+        }}>
           Configuración
-        </h1>
-        <div className="flex gap-2">
+        </span>
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button
-            className="btn-ghost text-xs"
+            className="btn-ghost"
+            style={{ fontSize: '13px' }}
             onClick={() => { if (confirm('¿Restaurar todos los valores por defecto?')) resetToDefaults(); }}
           >
             Resetear
@@ -128,346 +513,427 @@ export function SettingsScreen({ onClose }) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      {/* ── Contenido scrolleable con max-width ─────────────────── */}
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        padding: '0 24px',
+        maxWidth: '640px',
+        width: '100%',
+        margin: '0 auto',
+      }}>
 
-        {/* ── 1. Ejercicio ────────────────────────────────── */}
+        {/* ══ 1. EJERCICIO ══════════════════════════════════════ */}
         <Section title="Ejercicio" defaultOpen>
 
-          <SettingRow label="Tipo de ejercicio">
-            <select
-              value={settings.exerciseType}
-              onChange={e => updateSetting('exerciseType', e.target.value)}
-              className="w-full"
-              style={{
-                background: 'var(--color-surface-2)',
-                color: 'var(--color-text-primary)',
-                border: '1px solid var(--color-border-2)',
-                padding: '0.5rem',
-                fontFamily: 'var(--font-ui)',
-                fontSize: '0.95rem',
-              }}
-            >
-              <option value="koch_g4fon">Koch — Secuencia G4FON</option>
-              <option value="koch_lcwo">Koch — Secuencia LCWO</option>
-            </select>
-          </SettingRow>
-
-          <SettingRow
-            label={`Nivel Koch: ${settings.kochLevel} caracteres`}
-            hint={`Caracteres activos: ${activeSequence.slice(0, settings.kochLevel).join(' ')}`}
-          >
-            <SliderSetting
-              value={settings.kochLevel}
-              min={2}
-              max={maxLevel}
-              onChange={v => updateSetting('kochLevel', v)}
-            />
-          </SettingRow>
-
-          {/* Hard letters selector */}
-          <SettingRow label="Hard letters manuales" hint="Aparecen ~3x más frecuente">
-            <div className="flex flex-wrap gap-1.5 mt-1">
-              {activeSequence.slice(0, settings.kochLevel).map(char => {
-                const isHard = settings.hardLetters.includes(char);
+          <Field label="Tipo de ejercicio">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {EXERCISE_TYPES.map(opt => {
+                const active = opt.value === settings.exerciseType;
                 return (
                   <button
-                    key={char}
-                    onClick={() => {
-                      const current = settings.hardLetters;
-                      updateSetting(
-                        'hardLetters',
-                        isHard ? current.filter(c => c !== char) : [...current, char]
-                      );
-                    }}
-                    className="morse-text font-mono text-sm px-2 py-1 rounded-sm border transition-all"
+                    key={opt.value}
+                    onClick={() => updateSetting('exerciseType', opt.value)}
                     style={{
-                      background:  isHard ? 'var(--color-accent-dim)' : 'var(--color-surface-2)',
-                      borderColor: isHard ? 'var(--color-accent)' : 'var(--color-border)',
-                      color:       isHard ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                      padding: '10px 14px',
+                      textAlign: 'left',
+                      fontFamily: 'var(--font-ui)',
+                      fontSize: '14px',
+                      border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border)'}`,
+                      borderRadius: '2px',
+                      background: active ? 'var(--color-accent-dim)' : 'var(--color-surface)',
+                      color: active ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      transition: 'all 0.1s',
                     }}
                   >
-                    {char}
+                    <div style={{
+                      width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
+                      background: active ? 'var(--color-accent)' : 'transparent',
+                      border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border-2)'}`,
+                    }} />
+                    {opt.label}
                   </button>
                 );
               })}
             </div>
-          </SettingRow>
+          </Field>
 
-          <SettingRow label="Auto hard letters" hint="Los últimos 2 del nivel actual siempre son hard">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.autoHardLetters}
-                onChange={e => updateSetting('autoHardLetters', e.target.checked)}
-              />
-              <span className="font-ui text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                Activado
-              </span>
-            </label>
-          </SettingRow>
-        </Section>
-
-        {/* ── 2. Velocidad ─────────────────────────────────── */}
-        <Section title="Velocidad">
-          <SettingRow label="Unidad de velocidad">
-            <div className="flex gap-2">
-              {['wpm', 'cpm'].map(unit => (
-                <button
-                  key={unit}
-                  onClick={() => updateSetting('speedUnit', unit)}
-                  className="flex-1 py-2 font-ui text-sm font-bold tracking-widest uppercase rounded-sm border transition-all"
-                  style={{
-                    background:  settings.speedUnit === unit ? 'var(--color-accent)' : 'var(--color-surface-2)',
-                    borderColor: settings.speedUnit === unit ? 'var(--color-accent)' : 'var(--color-border)',
-                    color:       settings.speedUnit === unit ? '#000' : 'var(--color-text-muted)',
-                  }}
-                >
-                  {unit.toUpperCase()}
-                </button>
-              ))}
-            </div>
-          </SettingRow>
-
-          <SettingRow label={`Velocidad: ${settings.speedValue} ${settings.speedUnit.toUpperCase()}`}>
-            <SliderSetting
-              value={settings.speedValue}
-              min={5}
-              max={settings.speedUnit === 'cpm' ? 300 : 60}
-              onChange={v => updateSetting('speedValue', v)}
-              unit={` ${settings.speedUnit.toUpperCase()}`}
-            />
-          </SettingRow>
-        </Section>
-
-        {/* ── 3. Timing (Farnsworth) ───────────────────────── */}
-        <Section title="Timing / Farnsworth">
-          <SettingRow
-            label={`Espacio entre caracteres: ${settings.charSpacing.toFixed(1)}×`}
-            hint="1.0 = estándar. 2.0 = el doble de pausa entre caracteres"
-          >
-            <SliderSetting
-              value={settings.charSpacing}
-              min={0.5}
-              max={5.0}
-              step={0.1}
-              onChange={v => updateSetting('charSpacing', v)}
-              unit="×"
-            />
-          </SettingRow>
-
-          <SettingRow
-            label={`Espacio entre palabras: ${settings.wordSpacing.toFixed(1)}×`}
-            hint="Independiente del espacio entre caracteres"
-          >
-            <SliderSetting
-              value={settings.wordSpacing}
-              min={0.5}
-              max={5.0}
-              step={0.1}
-              onChange={v => updateSetting('wordSpacing', v)}
-              unit="×"
-            />
-          </SettingRow>
-
-          <SettingRow label={`Ratio dash/dot: ${settings.dashDotRatio.toFixed(1)}`} hint="Estándar ITU = 3.0">
-            <SliderSetting
-              value={settings.dashDotRatio}
-              min={2.0}
-              max={5.0}
-              step={0.1}
-              onChange={v => updateSetting('dashDotRatio', v)}
-            />
-          </SettingRow>
-        </Section>
-
-        {/* ── 4. Audio ─────────────────────────────────────── */}
-        <Section title="Audio">
-          <SettingRow label={`Frecuencia: ${settings.sidetoneFrequency} Hz`}>
-            <SliderSetting
-              value={settings.sidetoneFrequency}
-              min={300}
-              max={1200}
-              step={10}
-              onChange={v => updateSetting('sidetoneFrequency', v)}
-              unit=" Hz"
-            />
-          </SettingRow>
-
-          <SettingRow
-            label={`Dot pitch: ${settings.dotPitch === 0 ? 'Desactivado' : `${settings.dotPitch} Hz`}`}
-            hint="Si > 0, los dots suenan a esta frecuencia (separada de los dashes)"
-          >
-            <SliderSetting
-              value={settings.dotPitch}
-              min={0}
-              max={1200}
-              step={10}
-              onChange={v => updateSetting('dotPitch', v)}
-              unit={settings.dotPitch === 0 ? '' : ' Hz'}
-            />
-          </SettingRow>
-
-          <SettingRow label={`Volumen: ${settings.volume}%`}>
-            <SliderSetting
-              value={settings.volume}
-              min={0}
-              max={100}
-              onChange={v => updateSetting('volume', v)}
-              unit="%"
-            />
-          </SettingRow>
-
-          <div className="grid grid-cols-2 gap-4">
-            <SettingRow label={`Attack: ${settings.toneAttack} ms`} hint="Fade-in del tono">
-              <SliderSetting
-                value={settings.toneAttack}
-                min={1}
-                max={50}
-                onChange={v => updateSetting('toneAttack', v)}
-                unit=" ms"
-              />
-            </SettingRow>
-            <SettingRow label={`Release: ${settings.toneRelease} ms`} hint="Fade-out del tono">
-              <SliderSetting
-                value={settings.toneRelease}
-                min={1}
-                max={50}
-                onChange={v => updateSetting('toneRelease', v)}
-                unit=" ms"
-              />
-            </SettingRow>
-          </div>
-        </Section>
-
-        {/* ── 5. Sesión ─────────────────────────────────────── */}
-        <Section title="Sesión">
-          <SettingRow
-            label={`Duración: ${Math.floor(settings.exerciseDuration / 60)}:${String(settings.exerciseDuration % 60).padStart(2, '0')} min`}
-          >
-            <SliderSetting
-              value={settings.exerciseDuration}
-              min={30}
-              max={1800}
-              step={30}
-              onChange={v => updateSetting('exerciseDuration', v)}
-            />
-          </SettingRow>
-
-          <SettingRow label="Largo del grupo" hint="Caracteres por grupo Koch">
-            <div className="flex items-center gap-3">
-              <SliderSetting
-                value={settings.wordLength}
-                min={1}
-                max={15}
-                onChange={v => updateSetting('wordLength', v)}
-              />
-            </div>
-          </SettingRow>
-
-          <SettingRow label="Modo de largo">
-            <div className="flex gap-2">
-              {[
-                { id: 'fixed',    label: 'Fijo' },
-                { id: 'variable', label: 'Variable' },
-              ].map(opt => (
-                <button
-                  key={opt.id}
-                  onClick={() => updateSetting('wordLengthMode', opt.id)}
-                  className="flex-1 py-2 font-ui text-sm font-bold tracking-widest uppercase rounded-sm border transition-all"
-                  style={{
-                    background:  settings.wordLengthMode === opt.id ? 'var(--color-accent)' : 'var(--color-surface-2)',
-                    borderColor: settings.wordLengthMode === opt.id ? 'var(--color-accent)' : 'var(--color-border)',
-                    color:       settings.wordLengthMode === opt.id ? '#000' : 'var(--color-text-muted)',
-                  }}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </SettingRow>
-
-          <SettingRow label={`Pausa inicial: ${settings.startPause}s`} hint="Segundos antes de empezar a transmitir">
-            <SliderSetting
-              value={settings.startPause}
-              min={0}
-              max={30}
-              onChange={v => updateSetting('startPause', v)}
-              unit="s"
-            />
-          </SettingRow>
-        </Section>
-
-        {/* ── 6. Display ─────────────────────────────────────── */}
-        <Section title="Display">
-          <SettingRow
-            label="Group print"
-            hint="Si está activo, los caracteres enviados aparecen solo al final del grupo (no uno a uno)"
-          >
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.groupPrint}
-                onChange={e => updateSetting('groupPrint', e.target.checked)}
-              />
-              <span className="font-ui text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                Mostrar al final del grupo
-              </span>
-            </label>
-          </SettingRow>
-
-          {settings.groupPrint && (
-            <SettingRow
-              label={`Delay de group print: ${settings.groupPrintDelay}s`}
-              hint="Pausa entre fin del audio y la aparición del texto (head copy)"
+          {/* Cadena personalizada — solo si el ejercicio la requiere */}
+          {needsCustomString && (
+            <Field
+              label="Cadena personalizada"
+              hint="Texto libre. Prosigns con corchetes: <AR> <SK> <BT>. Comentarios entre llaves: {ignorado}."
             >
-              <SliderSetting
-                value={settings.groupPrintDelay}
-                min={0}
-                max={10}
-                step={0.5}
-                onChange={v => updateSetting('groupPrintDelay', v)}
-                unit="s"
+              <textarea
+                value={settings.customString}
+                onChange={e => updateSetting('customString', e.target.value)}
+                rows={5}
+                placeholder="A B C D E F G H I J K L M N O P Q R S T U V W X Y Z&#10;1 2 3 4 5 6 7 8 9 0 ? / = . ,&#10;<AR> <SK> <BT> <KN>"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '15px',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  background: 'var(--color-surface-2)',
+                  border: '1px solid var(--color-border-2)',
+                  borderRadius: '2px',
+                  color: 'var(--color-text-primary)',
+                  resize: 'vertical',
+                  outline: 'none',
+                }}
+                onFocus={e => e.target.style.borderColor = 'var(--color-accent)'}
+                onBlur={e => e.target.style.borderColor = 'var(--color-border-2)'}
               />
-            </SettingRow>
+            </Field>
           )}
 
-          <SettingRow label="Tamaño de fuente">
-            <div className="flex gap-2">
-              {[
-                { id: 'small', label: 'S' },
-                { id: 'medium', label: 'M' },
-                { id: 'large', label: 'L' },
-                { id: 'xlarge', label: 'XL' },
-              ].map(opt => (
-                <button
-                  key={opt.id}
-                  onClick={() => updateSetting('fontSize', opt.id)}
-                  className="flex-1 py-2 font-ui text-sm font-bold rounded-sm border transition-all"
-                  style={{
-                    background:  settings.fontSize === opt.id ? 'var(--color-accent)' : 'var(--color-surface-2)',
-                    borderColor: settings.fontSize === opt.id ? 'var(--color-accent)' : 'var(--color-border)',
-                    color:       settings.fontSize === opt.id ? '#000' : 'var(--color-text-muted)',
-                  }}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </SettingRow>
         </Section>
 
-        {/* Footer con info */}
-        <div
-          className="px-6 py-8 text-center"
-          style={{ color: 'var(--color-text-muted)' }}
-        >
-          <p className="font-ui text-xs tracking-wide">
-            Morse Koch Trainer — Radio Club Córdoba
-          </p>
-          <p className="font-ui text-xs mt-1 opacity-50">
-            Fase 1 · Motor de audio + loop básico
-          </p>
+        {/* ══ 2. VELOCIDAD ══════════════════════════════════════ */}
+        <Section title="Velocidad">
+
+          <Field label="Unidad de velocidad">
+            <Toggle
+              options={[{ value: 'wpm', label: 'WPM' }, { value: 'cpm', label: 'CPM' }]}
+              value={settings.speedUnit}
+              onChange={v => updateSetting('speedUnit', v)}
+            />
+          </Field>
+
+          <Field label="Velocidad">
+            <SpeedSlider
+              value={settings.speedValue}
+              unit={settings.speedUnit}
+              onChange={v => updateSetting('speedValue', v)}
+            />
+          </Field>
+
+        </Section>
+
+        {/* ══ 3. SESIÓN ══════════════════════════════════════════ */}
+        <Section title="Sesión">
+
+          <Field label="Duración del ejercicio">
+            <OptionGrid
+              options={DURATION_OPTIONS}
+              value={settings.exerciseDuration}
+              onChange={v => updateSetting('exerciseDuration', v)}
+              columns={4}
+            />
+          </Field>
+
+          <Field
+            label="Longitud de grupo"
+            hint="Variable: grupos aleatorios entre 1 y 5 caracteres."
+          >
+            <OptionGrid
+              options={WORD_LENGTH_OPTIONS}
+              value={settings.wordLength}
+              onChange={v => updateSetting('wordLength', v)}
+              columns={3}
+            />
+          </Field>
+
+          <Field label="Pausa inicial">
+            <OptionGrid
+              options={START_PAUSE_OPTIONS}
+              value={settings.startPause}
+              onChange={v => updateSetting('startPause', v)}
+              columns={5}
+            />
+          </Field>
+
+        </Section>
+
+        {/* ══ 4. NIVEL KOCH ══════════════════════════════════════ */}
+        <Section title="Nivel Koch">
+
+          <Field
+            label={`Nivel ${settings.kochLevel} — ${activeChars.length} carácter${activeChars.length !== 1 ? 'es' : ''} activo${activeChars.length !== 1 ? 's' : ''}`}
+            hint="Seleccioná hasta qué carácter de la secuencia querés practicar."
+          >
+            <KochLevelSelector
+              sequence={activeSequence}
+              level={settings.kochLevel}
+              onChange={v => updateSetting('kochLevel', v)}
+            />
+          </Field>
+
+          <Field label="Hard letters" hint="Aparecen ~3× más seguido en el ejercicio.">
+            <HardLettersEditor
+              activeChars={activeChars}
+              hardLetters={settings.hardLetters}
+              onChange={v => updateSetting('hardLetters', v)}
+            />
+          </Field>
+
+          <CheckboxField
+            label="Auto hard letters"
+            hint="Los últimos 2 caracteres del nivel actual siempre son hard."
+            checked={settings.autoHardLetters}
+            onChange={v => updateSetting('autoHardLetters', v)}
+          />
+
+        </Section>
+
+        {/* ══ 5. TIMING / FARNSWORTH ═════════════════════════════ */}
+        <Section title="Timing / Farnsworth">
+
+          <Field
+            label="Espaciado entre caracteres"
+            hint="Multiplica el silencio entre cada carácter. 1.0 = estándar ITU."
+          >
+            <OptionGrid
+              options={CHAR_SPACING_OPTIONS}
+              value={settings.charSpacing}
+              onChange={v => updateSetting('charSpacing', v)}
+              columns={3}
+            />
+          </Field>
+
+          <Field
+            label="Espacio entre palabras"
+            hint="Independiente del espaciado entre caracteres."
+          >
+            <OptionGrid
+              options={WORD_SPACING_OPTIONS}
+              value={settings.wordSpacing}
+              onChange={v => updateSetting('wordSpacing', v)}
+              columns={3}
+            />
+          </Field>
+
+          <Field label="Relación tablero / punto" hint="Duración del dash respecto al dit. Estándar ITU = 3.0.">
+            <OptionGrid
+              options={DASH_DOT_RATIO_OPTIONS}
+              value={settings.dashDotRatio}
+              onChange={v => updateSetting('dashDotRatio', v)}
+              columns={3}
+            />
+          </Field>
+
+        </Section>
+
+        {/* ══ 6. AUDIO ═══════════════════════════════════════════ */}
+        <Section title="Audio">
+
+          <Field label="Frecuencia sidetone (Hz)">
+            <OptionGrid
+              options={SIDETONE_OPTIONS}
+              value={settings.sidetoneFrequency}
+              onChange={v => updateSetting('sidetoneFrequency', v)}
+              columns={4}
+            />
+          </Field>
+
+          <Field
+            label="Campo de puntos (dot pitch)"
+            hint="Frecuencia relativa de los dots respecto al sidetone."
+          >
+            <OptionGrid
+              options={DOT_PITCH_OPTIONS}
+              value={settings.dotPitch}
+              onChange={v => updateSetting('dotPitch', v)}
+              columns={2}
+            />
+          </Field>
+
+          <Field label="Ataque de tono (ms)" hint="Fade-in al inicio de cada elemento.">
+            <OptionGrid
+              options={TONE_ENVELOPE_OPTIONS}
+              value={settings.toneAttack}
+              onChange={v => updateSetting('toneAttack', v)}
+              columns={4}
+            />
+          </Field>
+
+          <Field label="Liberación de tono (ms)" hint="Fade-out al final de cada elemento.">
+            <OptionGrid
+              options={TONE_ENVELOPE_OPTIONS}
+              value={settings.toneRelease}
+              onChange={v => updateSetting('toneRelease', v)}
+              columns={4}
+            />
+          </Field>
+
+          <Field label="Volumen">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={settings.volume}
+                onChange={e => updateSetting('volume', parseInt(e.target.value))}
+                style={{ flex: 1 }}
+              />
+              <span style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '15px',
+                fontWeight: 600,
+                color: 'var(--color-accent)',
+                minWidth: '42px',
+                textAlign: 'right',
+              }}>
+                {settings.volume}%
+              </span>
+            </div>
+          </Field>
+
+        </Section>
+
+        {/* ══ 7. DISPLAY ═════════════════════════════════════════ */}
+        <Section title="Display">
+
+          <CheckboxField
+            label="Impresión del grupo"
+            hint="Las letras enviadas aparecen solo al final del grupo (head copy)."
+            checked={settings.groupPrint}
+            onChange={v => updateSetting('groupPrint', v)}
+          />
+
+          {settings.groupPrint && (
+            <Field
+              label="Retraso de impresión grupal"
+              hint="Pausa entre el fin del audio y la aparición del texto."
+            >
+              <OptionGrid
+                options={GROUP_PRINT_DELAY_OPTIONS}
+                value={settings.groupPrintDelay}
+                onChange={v => updateSetting('groupPrintDelay', v)}
+                columns={3}
+              />
+            </Field>
+          )}
+
+          <Field label="Tamaño de fuente">
+            <OptionGrid
+              options={FONT_SIZE_OPTIONS}
+              value={settings.fontSize}
+              onChange={v => updateSetting('fontSize', v)}
+              columns={4}
+            />
+          </Field>
+
+          <CheckboxField
+            label="Mantener pantalla encendida"
+            hint="Evita que la pantalla se apague durante el ejercicio."
+            checked={settings.keepScreenOn}
+            onChange={v => updateSetting('keepScreenOn', v)}
+          />
+
+        </Section>
+
+        {/* ══ 8. VOZ (TTS) ═══════════════════════════════════════ */}
+        <Section title="Voz / Text-to-Speech">
+
+          <Field label="Modo de voz">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {SPEECH_MODES.map(opt => {
+                const active = opt.value === settings.speechMode;
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => updateSetting('speechMode', opt.value)}
+                    style={{
+                      padding: '10px 14px',
+                      textAlign: 'left',
+                      fontFamily: 'var(--font-ui)',
+                      fontSize: '14px',
+                      border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border)'}`,
+                      borderRadius: '2px',
+                      background: active ? 'var(--color-accent-dim)' : 'var(--color-surface)',
+                      color: active ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      transition: 'all 0.1s',
+                    }}
+                  >
+                    <div style={{
+                      width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
+                      background: active ? 'var(--color-accent)' : 'transparent',
+                      border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border-2)'}`,
+                    }} />
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+
+          {settings.speechMode !== 'none' && (
+            <>
+              <Field label="Idioma Text-to-Speech">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {SPEECH_LANGS.map(opt => {
+                    const active = opt.value === settings.speechLang;
+                    return (
+                      <button
+                        key={opt.value}
+                        onClick={() => updateSetting('speechLang', opt.value)}
+                        style={{
+                          padding: '9px 14px',
+                          textAlign: 'left',
+                          fontFamily: 'var(--font-ui)',
+                          fontSize: '14px',
+                          border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border)'}`,
+                          borderRadius: '2px',
+                          background: active ? 'var(--color-accent-dim)' : 'var(--color-surface)',
+                          color: active ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          transition: 'all 0.1s',
+                        }}
+                      >
+                        <div style={{
+                          width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
+                          background: active ? 'var(--color-accent)' : 'transparent',
+                          border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border-2)'}`,
+                        }} />
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </Field>
+
+              <Field label="Tiempo antes de hablar" hint="Pausa entre el último tono CW y la voz.">
+                <OptionGrid
+                  options={SPEECH_TIMING_OPTIONS}
+                  value={settings.timeBeforeSpeech}
+                  onChange={v => updateSetting('timeBeforeSpeech', v)}
+                  columns={3}
+                />
+              </Field>
+
+              <Field label="Tiempo después de hablar" hint="Pausa después de la voz antes del siguiente grupo.">
+                <OptionGrid
+                  options={SPEECH_TIMING_OPTIONS}
+                  value={settings.timeAfterSpeech}
+                  onChange={v => updateSetting('timeAfterSpeech', v)}
+                  columns={3}
+                />
+              </Field>
+            </>
+          )}
+
+        </Section>
+
+        {/* Footer */}
+        <div style={{ padding: '32px 0 24px', textAlign: 'center', color: 'var(--color-text-muted)', fontFamily: 'var(--font-ui)', fontSize: '12px' }}>
+          Morse Koch Trainer — Radio Club Córdoba
         </div>
+
       </div>
     </div>
   );

@@ -1,156 +1,291 @@
 /**
  * defaults.js
  * ─────────────────────────────────────────────────────────────────
- * Fuente de verdad para los valores por defecto de todos los settings
- * y del estado de progreso del usuario.
- * 
- * Estos objetos se usan para:
- *   1. Inicializar el estado en el primer uso (sin localStorage)
- *   2. Como fallback cuando un setting está ausente en localStorage
- *   3. Para el botón "Restaurar valores por defecto"
- * 
- * IMPORTANTE: Si se agrega un nuevo setting, se debe agregar aquí
- * con su valor por defecto para que la app funcione correctamente.
+ * Fuente de verdad para todos los settings y el estado de progreso.
+ *
+ * Cuando se agrega un setting nuevo, siempre agregarlo acá con su
+ * default. mergeWithDefaults() garantiza retrocompatibilidad con
+ * datos guardados en versiones anteriores.
  * ─────────────────────────────────────────────────────────────────
  */
 
+// ── Opciones discretas reutilizadas en la UI ──────────────────────
+// Centralizar acá evita que la UI y los defaults diverjan.
+
+/** Opciones de duración de ejercicio (valor en segundos, label para UI) */
+export const DURATION_OPTIONS = [
+  { value: 10,   label: '10 seg' },
+  { value: 30,   label: '30 seg' },
+  { value: 60,   label: '1 min'  },
+  { value: 120,  label: '2 min'  },
+  { value: 180,  label: '3 min'  },
+  { value: 300,  label: '5 min'  },
+  { value: 600,  label: '10 min' },
+];
+
+/** Opciones de longitud de grupo (valor en cantidad de letras, label para UI) */
+export const WORD_LENGTH_OPTIONS = [
+  { value: 0,  label: 'Variable' },  // 0 = modo variable
+  { value: 1,  label: '1 letra'  },
+  { value: 2,  label: '2 letras' },
+  { value: 3,  label: '3 letras' },
+  { value: 4,  label: '4 letras' },
+  { value: 5,  label: '5 letras' },
+  { value: 6,  label: '6 letras' },
+  { value: 7,  label: '7 letras' },
+  { value: 8,  label: '8 letras' },
+];
+
+/** Opciones de pausa inicial (valor en segundos) */
+export const START_PAUSE_OPTIONS = [
+  { value: 0, label: '0 seg' },
+  { value: 1, label: '1 seg' },
+  { value: 2, label: '2 seg' },
+  { value: 3, label: '3 seg' },
+  { value: 5, label: '5 seg' },
+];
+
 /**
- * Configuración por defecto de todos los parámetros de la sesión.
- * Ver spec completa en la sección 3 del documento de producto.
+ * Opciones de dot pitch.
+ * IZ2UUF usa opciones relativas al sidetone, no Hz absolutos.
+ * Valor 0 = igual al sidetone (desactivado como frecuencia separada).
+ * Valores positivos = multiplicador sobre sidetoneFrequency.
  */
+export const DOT_PITCH_OPTIONS = [
+  { value: 0,    label: 'Igual que el tablero' },
+  { value: 1.03, label: '3% más alto'  },
+  { value: 1.04, label: '4% más alto'  },
+  { value: 1.05, label: '5% más alto'  },
+  { value: 1.10, label: '10% más alto' },
+  { value: 1.20, label: '20% más alto' },
+  { value: 1.50, label: '50% más alto' },
+];
+
+/** Opciones de retraso de impresión grupal (segundos) */
+export const GROUP_PRINT_DELAY_OPTIONS = [
+  { value: 0,   label: '0 seg'   },
+  { value: 2.5, label: '2.5 seg' },
+  { value: 3.0, label: '3 seg'   },
+  { value: 3.5, label: '3.5 seg' },
+  { value: 4.0, label: '4 seg'   },
+  { value: 5.0, label: '5 seg'   },
+];
+
+/** Opciones de espaciado entre caracteres (multiplicador) */
+export const CHAR_SPACING_OPTIONS = [
+  { value: 1.0, label: '1.0×' },
+  { value: 1.5, label: '1.5×' },
+  { value: 2.0, label: '2.0×' },
+  { value: 2.5, label: '2.5×' },
+  { value: 3.0, label: '3.0×' },
+  { value: 3.5, label: '3.5×' },
+];
+
+/** Opciones de espacio entre palabras (multiplicador) */
+export const WORD_SPACING_OPTIONS = [
+  { value: 1.0, label: '1.0×' },
+  { value: 1.5, label: '1.5×' },
+  { value: 2.0, label: '2.0×' },
+  { value: 2.5, label: '2.5×' },
+  { value: 3.0, label: '3.0×' },
+  { value: 3.5, label: '3.5×' },
+];
+
+/** Opciones de ratio dash/dot */
+export const DASH_DOT_RATIO_OPTIONS = [
+  { value: 2.5, label: '2.5×' },
+  { value: 2.8, label: '2.8×' },
+  { value: 3.0, label: '3.0× (estándar)' },
+  { value: 3.2, label: '3.2×' },
+  { value: 3.5, label: '3.5×' },
+];
+
+/** Opciones de sidetone frecuencia (Hz) */
+export const SIDETONE_OPTIONS = [
+  { value: 400, label: '400 Hz' },
+  { value: 500, label: '500 Hz' },
+  { value: 600, label: '600 Hz' },
+  { value: 700, label: '700 Hz' },
+  { value: 750, label: '750 Hz' },
+  { value: 800, label: '800 Hz' },
+  { value: 900, label: '900 Hz' },
+  { value: 1000, label: '1000 Hz' },
+];
+
+/** Opciones de attack/release de tono (ms) */
+export const TONE_ENVELOPE_OPTIONS = [
+  { value: 1,  label: '1 ms'  },
+  { value: 2,  label: '2 ms'  },
+  { value: 3,  label: '3 ms'  },
+  { value: 5,  label: '5 ms'  },
+  { value: 8,  label: '8 ms'  },
+  { value: 10, label: '10 ms' },
+  { value: 15, label: '15 ms' },
+  { value: 20, label: '20 ms' },
+];
+
+/** Tipos de ejercicio disponibles */
+export const EXERCISE_TYPES = [
+  { value: 'koch_g4fon',          label: 'Koch (secuencia G4FON)'                    },
+  { value: 'koch_lcwo',           label: 'Koch (secuencia LCWO)'                     },
+  { value: 'koch_custom',         label: 'Koch (caracteres de cadena personalizada)' },
+  { value: 'custom_string',       label: 'Cadena personalizada'                      },
+  { value: 'words_custom',        label: 'Palabras de cadena personalizada'          },
+  { value: 'words_custom_g4fon',  label: 'Palabras de cadena personalizada y G4FON' },
+  { value: 'words_custom_lcwo',   label: 'Palabras de cadena personalizada y LCWO'  },
+];
+
+/** Modos de voz (Web Speech API) */
+export const SPEECH_MODES = [
+  { value: 'none',         label: 'Ningún discurso'         },
+  { value: 'itu_phonetic', label: 'ITU ortografía fonética' },
+  { value: 'short_letters', label: 'Ortografía letras cortas' },
+  { value: 'tts_read',     label: 'Text-to-speech palabras' },
+];
+
+/** Idiomas de TTS disponibles */
+export const SPEECH_LANGS = [
+  { value: 'es-AR', label: 'Español (Argentina)' },
+  { value: 'es-ES', label: 'Español (España)'    },
+  { value: 'en-US', label: 'Inglés (EE.UU.)'     },
+  { value: 'en-GB', label: 'Inglés (UK)'         },
+  { value: 'de-DE', label: 'Alemán'              },
+  { value: 'fr-FR', label: 'Francés'             },
+  { value: 'it-IT', label: 'Italiano'            },
+  { value: 'pt-BR', label: 'Portugués (Brasil)'  },
+];
+
+/** Opciones de tamaño de fuente del display */
+export const FONT_SIZE_OPTIONS = [
+  { value: 'small',  label: 'Pequeño' },
+  { value: 'medium', label: 'Mediano' },
+  { value: 'large',  label: 'Grande'  },
+  { value: 'xlarge', label: 'Muy grande' },
+];
+
+/** Opciones de tiempo antes/después de hablar (segundos) */
+export const SPEECH_TIMING_OPTIONS = [
+  { value: 0.5, label: '0.5 seg' },
+  { value: 1.0, label: '1 seg'   },
+  { value: 1.5, label: '1.5 seg' },
+  { value: 2.0, label: '2 seg'   },
+  { value: 2.5, label: '2.5 seg' },
+  { value: 3.0, label: '3 seg'   },
+];
+
+// ── Settings por defecto ──────────────────────────────────────────
+
 export const DEFAULT_SETTINGS = {
-  // ── Tipo de ejercicio ───────────────────────────────────────
-  // 'koch_g4fon' | 'koch_lcwo' | 'koch_custom' | 'custom_string' |
-  // 'words_custom' | 'words_custom_g4fon' | 'words_custom_lcwo'
+  // Tipo de ejercicio
   exerciseType: 'koch_g4fon',
 
-  // ── Velocidad ───────────────────────────────────────────────
-  // Velocidad de los caracteres individuales (no del texto completo con espacios)
+  // Velocidad
   speedValue: 20,
   speedUnit: 'wpm',  // 'wpm' | 'cpm'
 
-  // ── Estructura de la sesión ─────────────────────────────────
-  exerciseDuration: 300,    // Duración total en segundos (5 minutos)
-  wordLength: 5,            // Caracteres por grupo Koch
-  wordLengthMode: 'fixed',  // 'fixed' | 'variable' (random entre 1 y wordLength)
-  startPause: 3,            // Pausa inicial antes de empezar a transmitir (segundos)
+  // Duración: valor en segundos, elegido de DURATION_OPTIONS
+  exerciseDuration: 600,
 
-  // ── Koch level ──────────────────────────────────────────────
-  // Cantidad de caracteres activos de la secuencia Koch.
-  // Nivel 2 = los primeros 2 caracteres (K y M en G4FON).
+  // Longitud de grupo:
+  //   wordLength = 0  → modo variable (random 1–5 chars)
+  //   wordLength = N  → exactamente N caracteres
+  wordLength: 5,
+
+  // Koch level: índice 1-based en la secuencia activa
+  // (nivel 2 = K y M en G4FON; nivel 5 = K M R S U en G4FON)
   kochLevel: 2,
 
-  // ── Hard letters ────────────────────────────────────────────
-  // Caracteres marcados manualmente como "difíciles" → aparecen 3× más
+  // Hard letters: array de caracteres marcados como difíciles
   hardLetters: [],
-  // Si true: los últimos 2 caracteres del nivel actual son automáticamente hard
+  // Si true: los últimos 2 del nivel actual se suman automáticamente al hardSet
   autoHardLetters: true,
 
-  // ── Spacing (Farnsworth) ────────────────────────────────────
-  // Multiplicadores sobre el timing estándar.
-  // 1.0 = estándar ITU. 2.0 = el doble de espacio. 0.5 = la mitad.
-  // Cada uno es independiente: podés extender el espacio entre palabras
-  // sin afectar el espacio entre caracteres dentro de cada palabra.
-  charSpacing: 1.0,  // Multiplica el inter-carácter (3 dots → N×3 dots)
-  wordSpacing: 1.0,  // Multiplica el inter-palabra  (7 dots → N×7 dots)
+  // Espaciado Farnsworth — valores elegidos de CHAR/WORD_SPACING_OPTIONS
+  charSpacing: 1.0,
+  wordSpacing: 1.0,
 
-  // ── Audio / Tono ─────────────────────────────────────────────
-  sidetoneFrequency: 600, // Hz — frecuencia principal del tono CW
-  dotPitch: 0,            // Hz — si > 0, los dots usan esta frecuencia (vs dashes)
-  toneAttack: 5,          // ms — fade-in del tono (evita clicks audibles)
-  toneRelease: 5,         // ms — fade-out del tono (evita clicks audibles)
-  dashDotRatio: 3.0,      // Ratio duración dash/dot (estándar ITU = 3.0)
-  volume: 80,             // % de volumen (0-100)
+  // Audio
+  sidetoneFrequency: 700,  // Hz — elegido de SIDETONE_OPTIONS
+  dotPitch: 0,             // multiplicador (0 = igual al sidetone) — de DOT_PITCH_OPTIONS
+  toneAttack: 5,           // ms — de TONE_ENVELOPE_OPTIONS
+  toneRelease: 5,          // ms — de TONE_ENVELOPE_OPTIONS
+  dashDotRatio: 3.0,       // de DASH_DOT_RATIO_OPTIONS
+  volume: 80,              // % (0–100, slider libre)
 
-  // ── Visualización ───────────────────────────────────────────
-  // Si true: los caracteres enviados aparecen solo al FINAL del grupo,
-  //          no uno a uno mientras suenan (entrena "head copy")
+  // Impresión del grupo
   groupPrint: false,
-  // Segundos de delay entre fin del audio y la aparición del texto (head copy)
-  groupPrintDelay: 0,
-  // Tamaño de fuente del display principal: 'small'|'medium'|'large'|'xlarge'
-  fontSize: 'medium',
-  // Mantener la pantalla activa durante la sesión (Screen Wake Lock API)
+  groupPrintDelay: 0,      // segundos — de GROUP_PRINT_DELAY_OPTIONS
+
+  // Pausa inicial antes de transmitir — de START_PAUSE_OPTIONS
+  startPause: 3,
+
+  // Display
+  fontSize: 'medium',      // de FONT_SIZE_OPTIONS
   keepScreenOn: true,
 
-  // ── Speech / Text-to-Speech ──────────────────────────────────
-  // 'none' | 'itu_phonetic' | 'short_letters' | 'tts_read'
-  speechMode: 'none',
-  speechLang: 'en-US',   // Código de idioma para la Web Speech API
-  timeBeforeSpeech: 1.5, // Segundos entre fin del audio CW y la voz
-  timeAfterSpeech: 1.0,  // Segundos después de la voz antes del siguiente grupo
+  // Speech / TTS
+  speechMode: 'none',      // de SPEECH_MODES
+  speechLang: 'es-AR',     // de SPEECH_LANGS (default español Argentina)
+  timeBeforeSpeech: 2.0,   // segundos — de SPEECH_TIMING_OPTIONS
+  timeAfterSpeech: 1.0,    // segundos — de SPEECH_TIMING_OPTIONS
 
-  // ── Custom string ────────────────────────────────────────────
-  // Texto personalizado para los modos 'custom_string' y 'words_*'
+  // Cadena personalizada (para modos custom_string / words_*)
   customString: '',
 
-  // ── Presets de usuario ───────────────────────────────────────
-  // Array de hasta 5 configuraciones guardadas.
-  // Cada preset: { id: string, name: string, settings: {...} }
+  // Presets guardados por el usuario (hasta 5)
+  // Estructura: [{ id, name, settings: {...} }]
   userPresets: [],
 };
 
-/**
- * Estado de progreso por defecto.
- * Se acumula a través de sesiones y persiste en localStorage.
- */
+// ── Progreso por defecto ──────────────────────────────────────────
+
 export const DEFAULT_PROGRESS = {
-  // Estadísticas por carácter (acumuladas de todas las sesiones)
-  // Estructura: { [char]: { correct: number, total: number } }
-  // Ejemplo: { 'K': { correct: 45, total: 50 }, 'M': { correct: 38, total: 50 } }
+  // Stats por carácter: { [char]: { correct: number, total: number } }
   characterStats: {},
 
-  // Historial de sesiones (últimas 100).
-  // Cada sesión es un snapshot completo para poder graficar evolución.
+  // Historial de sesiones (últimas 100)
+  // [{ id, date, exerciseType, kochLevel, speedValue, speedUnit,
+  //    accuracy, totalChars, correctChars, durationSeconds, characterScores }]
   sessionHistory: [],
-  // Estructura de cada entrada en sessionHistory:
-  // {
-  //   id:              string (UUID simple),
-  //   date:            string (ISO 8601),
-  //   exerciseType:    string,
-  //   kochLevel:       number,
-  //   speedValue:      number,
-  //   speedUnit:       string,
-  //   accuracy:        number (0-100, promedio de la sesión),
-  //   totalChars:      number,
-  //   correctChars:    number,
-  //   durationSeconds: number,
-  //   characterScores: { [char]: { correct, total } },
-  // }
 
-  // ── Estadísticas globales ────────────────────────────────────
-  totalTrainingTime: 0,  // Segundos totales de práctica
-  totalSessions: 0,       // Cantidad de sesiones completadas
-  firstSessionDate: null, // ISO string de la primera sesión
-  lastSessionDate: null,  // ISO string de la última sesión
+  totalTrainingTime: 0,
+  totalSessions: 0,
+  firstSessionDate: null,
+  lastSessionDate: null,
 };
 
+// ── Helpers de merge ──────────────────────────────────────────────
+
 /**
- * Fusiona settings guardados en localStorage con los defaults.
- * Garantiza que si se agregan nuevos settings en el futuro,
- * los usuarios con datos viejos no pierdan funcionalidad.
- * 
- * @param {object} saved - Settings leídos de localStorage (pueden estar incompletos)
- * @returns {object}       Settings completos con defaults para lo que falte
+ * Fusiona settings guardados con los defaults.
+ * Garantiza retrocompatibilidad: campos nuevos tienen su default
+ * aunque no estén en los datos guardados.
  */
 export function mergeWithDefaults(saved) {
   if (!saved || typeof saved !== 'object') return { ...DEFAULT_SETTINGS };
   return { ...DEFAULT_SETTINGS, ...saved };
 }
 
-/**
- * Fusiona progreso guardado con los defaults.
- * 
- * @param {object} saved - Progreso leído de localStorage
- * @returns {object}       Progreso completo
- */
 export function mergeProgressWithDefaults(saved) {
   if (!saved || typeof saved !== 'object') return { ...DEFAULT_PROGRESS };
   return {
     ...DEFAULT_PROGRESS,
     ...saved,
-    // Los objetos anidados necesitan merge explícito para no ser reemplazados
     characterStats: saved.characterStats ?? {},
     sessionHistory:  saved.sessionHistory  ?? [],
   };
+}
+
+// ── Helpers de validación ─────────────────────────────────────────
+
+/**
+ * Dado un valor y una lista de opciones, devuelve el valor
+ * más cercano de la lista. Útil para normalizar valores viejos
+ * que venían de un slider y ahora son discretos.
+ */
+export function snapToOption(value, options) {
+  if (!options || options.length === 0) return value;
+  return options.reduce((best, opt) =>
+    Math.abs(opt.value - value) < Math.abs(best.value - value) ? opt : best
+  ).value;
 }

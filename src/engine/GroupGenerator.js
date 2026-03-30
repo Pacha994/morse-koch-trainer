@@ -34,12 +34,12 @@ export function generateGroup(settings, kochSequence) {
   const activeChars = getActiveCharacters(kochSequence, settings.kochLevel);
 
   // ── 2. Determinar largo del grupo ─────────────────────────
+  // wordLength === 0  → modo variable (1 a 5 caracteres aleatorio)
+  // wordLength  >  0  → exactamente ese número de caracteres
   let groupLen;
-  if (settings.wordLengthMode === 'variable') {
-    // Variable: número aleatorio entre 1 y wordLength (inclusive)
-    groupLen = Math.floor(Math.random() * settings.wordLength) + 1;
+  if (settings.wordLength === 0) {
+    groupLen = Math.floor(Math.random() * 5) + 1; // 1 a 5
   } else {
-    // Fixed: siempre el mismo largo
     groupLen = settings.wordLength;
   }
 

@@ -197,9 +197,13 @@ export class MorsePlayer {
     const volume     = settings.volume / 100;                // % → 0.0-1.0
     const attackSec  = (settings.toneAttack  || 5) / 1000;  // ms → segundos
     const releaseSec = (settings.toneRelease || 5) / 1000;  // ms → segundos
-    const mainFreq   = settings.sidetoneFrequency || 600;    // Hz del dah y sidetone
-    // Si dotPitch > 0, los dots tienen frecuencia diferente; si no, igual al dah
-    const dotFreq    = settings.dotPitch > 0 ? settings.dotPitch : mainFreq;
+    const mainFreq   = settings.sidetoneFrequency || 700;    // Hz del dah y sidetone
+    // dotPitch es ahora un MULTIPLICADOR sobre sidetoneFrequency (0 = igual al sidetone).
+    // Ej: dotPitch=1.05 → dots suenan un 5% más alto que los dashes.
+    // Esto es exactamente lo que hace IZ2UUF ("3% más alto", "5% más alto", etc.)
+    const dotFreq    = settings.dotPitch > 0
+      ? Math.round(mainFreq * settings.dotPitch)
+      : mainFreq;
 
     // ── Punto de inicio ────────────────────────────────────────
     // Pequeño buffer de 50ms para dar tiempo al runtime a prepararse
