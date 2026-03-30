@@ -28,10 +28,10 @@ export function AudioIndicator({ sessionState, currentGroup, groupPrint, inputTi
             width:      10,
             height:     10,
             background: isPlaying
-              ? 'var(--color-accent)'
+              ? 'var(--amber)'
               : isWaiting
-                ? 'var(--color-text-muted)'
-                : 'var(--color-border-2)',
+                ? 'var(--text-3)'
+                : 'var(--border-2)',
             transition: 'background 0.3s',
           }}
         />
@@ -41,10 +41,10 @@ export function AudioIndicator({ sessionState, currentGroup, groupPrint, inputTi
           className="font-ui text-xs tracking-widest uppercase"
           style={{
             color: isPlaying
-              ? 'var(--color-accent)'
+              ? 'var(--amber)'
               : isWaiting
-                ? 'var(--color-text-secondary)'
-                : 'var(--color-text-muted)',
+                ? 'var(--text-2)'
+                : 'var(--text-3)',
           }}
         >
           {isPlaying ? 'Transmitiendo'
@@ -57,7 +57,7 @@ export function AudioIndicator({ sessionState, currentGroup, groupPrint, inputTi
       {!groupPrint && (isWaiting) && currentGroup && (
         <div
           className="morse-text morse-sm slide-up"
-          style={{ color: 'var(--color-text-muted)', opacity: 0.4 }}
+          style={{ color: 'var(--text-3)', opacity: 0.4 }}
           title="Grupo enviado (visible solo en modo debug)"
         >
           {/* Oculto por defecto: solo durante el feedback se muestra claramente */}

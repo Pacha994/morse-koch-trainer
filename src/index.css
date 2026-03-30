@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
 /*
  * index.css — CW Koch Trainer, Radio Club Córdoba
  *
@@ -7,8 +9,6 @@
  * ámbar como único acento. Sin decoración — todo es función.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap');
-@import "tailwindcss";
 
 /* ── Sistema de color ─────────────────────────────────────────── */
 :root {

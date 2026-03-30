@@ -52,7 +52,7 @@ import {
 function Section({ title, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div style={{ borderBottom: '1px solid var(--color-border)' }}>
+    <div style={{ borderBottom: '1px solid var(--border)' }}>
       <button
         onClick={() => setOpen(o => !o)}
         style={{
@@ -72,11 +72,11 @@ function Section({ title, children, defaultOpen = false }) {
           fontWeight: 700,
           letterSpacing: '0.18em',
           textTransform: 'uppercase',
-          color: 'var(--color-text-muted)',
+          color: 'var(--text-3)',
         }}>
           {title}
         </span>
-        <span style={{ color: 'var(--color-text-muted)', fontSize: '10px' }}>
+        <span style={{ color: 'var(--text-3)', fontSize: '10px' }}>
           {open ? '▲' : '▼'}
         </span>
       </button>
@@ -99,14 +99,14 @@ function Field({ label, hint, children }) {
         fontFamily: 'var(--font-ui)',
         fontSize: '14px',
         fontWeight: 600,
-        color: 'var(--color-text-secondary)',
+        color: 'var(--text-2)',
       }}>
         {label}
       </span>
       {hint && (
         <span style={{
           fontSize: '13px',
-          color: 'var(--color-text-muted)',
+          color: 'var(--text-3)',
           lineHeight: 1.4,
         }}>
           {hint}
@@ -139,10 +139,10 @@ function OptionGrid({ options, value, onChange, columns = 3 }) {
               fontFamily: 'var(--font-ui)',
               fontSize: '13px',
               fontWeight: active ? 700 : 500,
-              border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border-2)'}`,
+              border: `1px solid ${active ? 'var(--amber)' : 'var(--border-2)'}`,
               borderRadius: '2px',
-              background: active ? 'var(--color-accent)' : 'var(--color-surface-2)',
-              color: active ? '#000' : 'var(--color-text-secondary)',
+              background: active ? 'var(--amber)' : 'var(--surface-2)',
+              color: active ? '#000' : 'var(--text-2)',
               cursor: 'pointer',
               transition: 'all 0.12s',
               textAlign: 'center',
@@ -177,10 +177,10 @@ function Toggle({ options, value, onChange }) {
               fontWeight: 700,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border-2)'}`,
+              border: `1px solid ${active ? 'var(--amber)' : 'var(--border-2)'}`,
               borderRadius: '2px',
-              background: active ? 'var(--color-accent)' : 'var(--color-surface-2)',
-              color: active ? '#000' : 'var(--color-text-muted)',
+              background: active ? 'var(--amber)' : 'var(--surface-2)',
+              color: active ? '#000' : 'var(--text-3)',
               cursor: 'pointer',
               transition: 'all 0.12s',
             }}
@@ -202,13 +202,13 @@ function SpeedSlider({ value, unit, onChange }) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
-        <span style={{ fontSize: '13px', color: 'var(--color-text-muted)', fontFamily: 'var(--font-ui)' }}>
+        <span style={{ fontSize: '13px', color: 'var(--text-3)', fontFamily: 'var(--font-ui)' }}>
           {min} {unit.toUpperCase()}
         </span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '22px', fontWeight: 700, color: 'var(--color-accent)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '22px', fontWeight: 700, color: 'var(--amber)' }}>
           {value} <span style={{ fontSize: '13px', fontWeight: 400 }}>{unit.toUpperCase()}</span>
         </span>
-        <span style={{ fontSize: '13px', color: 'var(--color-text-muted)', fontFamily: 'var(--font-ui)' }}>
+        <span style={{ fontSize: '13px', color: 'var(--text-3)', fontFamily: 'var(--font-ui)' }}>
           {max} {unit.toUpperCase()}
         </span>
       </div>
@@ -233,7 +233,7 @@ function SpeedSlider({ value, unit, onChange }) {
 function KochLevelSelector({ sequence, level, onChange }) {
   return (
     <div style={{
-      border: '1px solid var(--color-border)',
+      border: '1px solid var(--border)',
       borderRadius: '2px',
       maxHeight: '260px',
       overflowY: 'auto',
@@ -257,13 +257,13 @@ function KochLevelSelector({ sequence, level, onChange }) {
               gap: '12px',
               padding: '9px 14px',
               background: isSelected
-                ? 'var(--color-accent-dim)'
+                ? 'var(--amber-dim)'
                 : isActive
-                  ? 'var(--color-surface)'
-                  : 'var(--color-bg)',
-              borderBottom: '1px solid var(--color-border)',
+                  ? 'var(--surface)'
+                  : 'var(--bg)',
+              borderBottom: '1px solid var(--border)',
               border: 'none',
-              borderBottom: idx < sequence.length - 1 ? '1px solid var(--color-border)' : 'none',
+              borderBottom: idx < sequence.length - 1 ? '1px solid var(--border)' : 'none',
               cursor: selectable ? 'pointer' : 'default',
               textAlign: 'left',
               opacity: selectable ? 1 : 0.35,
@@ -276,18 +276,18 @@ function KochLevelSelector({ sequence, level, onChange }) {
               borderRadius: '50%',
               flexShrink: 0,
               background: isSelected
-                ? 'var(--color-accent)'
+                ? 'var(--amber)'
                 : isActive
-                  ? 'var(--color-border-2)'
+                  ? 'var(--border-2)'
                   : 'transparent',
-              border: `1px solid ${isActive ? 'var(--color-accent)' : 'var(--color-border-2)'}`,
+              border: `1px solid ${isActive ? 'var(--amber)' : 'var(--border-2)'}`,
             }} />
 
             {/* Número de nivel */}
             <span style={{
               fontFamily: 'var(--font-ui)',
               fontSize: '11px',
-              color: 'var(--color-text-muted)',
+              color: 'var(--text-3)',
               width: '18px',
               flexShrink: 0,
             }}>
@@ -300,10 +300,10 @@ function KochLevelSelector({ sequence, level, onChange }) {
               fontSize: '16px',
               fontWeight: 700,
               color: isSelected
-                ? 'var(--color-accent)'
+                ? 'var(--amber)'
                 : isActive
-                  ? 'var(--color-text-primary)'
-                  : 'var(--color-text-muted)',
+                  ? 'var(--text-1)'
+                  : 'var(--text-3)',
               width: '20px',
               flexShrink: 0,
             }}>
@@ -316,8 +316,8 @@ function KochLevelSelector({ sequence, level, onChange }) {
               fontSize: '14px',
               letterSpacing: '0.12em',
               color: isSelected
-                ? 'var(--color-accent)'
-                : 'var(--color-text-muted)',
+                ? 'var(--amber)'
+                : 'var(--text-3)',
             }}>
               {MORSE_CODE[char] ?? ''}
             </span>
@@ -373,15 +373,15 @@ function HardLettersEditor({ activeChars, hardLetters, onChange }) {
           fontWeight: 600,
           letterSpacing: '0.25em',
           textTransform: 'uppercase',
-          background: 'var(--color-surface-2)',
-          border: '1px solid var(--color-border-2)',
+          background: 'var(--surface-2)',
+          border: '1px solid var(--border-2)',
           borderRadius: '2px',
-          color: 'var(--color-accent)',
+          color: 'var(--amber)',
           outline: 'none',
           width: '100%',
         }}
-        onFocus={e => e.target.style.borderColor = 'var(--color-accent)'}
-        onBlur={e => e.target.style.borderColor = 'var(--color-border-2)'}
+        onFocus={e => e.target.style.borderColor = 'var(--amber)'}
+        onBlur={e => e.target.style.borderColor = 'var(--border-2)'}
       />
 
       {/* Grilla de todos los caracteres activos */}
@@ -404,9 +404,9 @@ function HardLettersEditor({ activeChars, hardLetters, onChange }) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: '2px',
-                border: `1px solid ${isHard ? 'var(--color-accent)' : 'var(--color-border)'}`,
-                background: isHard ? 'var(--color-accent-dim)' : 'var(--color-surface-2)',
-                color: isHard ? 'var(--color-accent)' : 'var(--color-text-muted)',
+                border: `1px solid ${isHard ? 'var(--amber)' : 'var(--border)'}`,
+                background: isHard ? 'var(--amber-dim)' : 'var(--surface-2)',
+                color: isHard ? 'var(--amber)' : 'var(--text-3)',
                 cursor: 'pointer',
                 transition: 'all 0.1s',
               }}
@@ -416,7 +416,7 @@ function HardLettersEditor({ activeChars, hardLetters, onChange }) {
           );
         })}
       </div>
-      <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
+      <span style={{ fontSize: '13px', color: 'var(--text-3)' }}>
         Los caracteres marcados aparecen con frecuencia ~3× mayor durante el ejercicio.
       </span>
     </div>
@@ -434,7 +434,7 @@ function CheckboxField({ label, hint, checked, onChange }) {
       gap: '10px',
       cursor: 'pointer',
       padding: '10px 12px',
-      background: 'var(--color-surface)',
+      background: 'var(--surface)',
       borderRadius: '2px',
     }}>
       <input
@@ -444,11 +444,11 @@ function CheckboxField({ label, hint, checked, onChange }) {
         style={{ marginTop: '2px', flexShrink: 0 }}
       />
       <div>
-        <div style={{ fontSize: '14px', fontFamily: 'var(--font-ui)', color: 'var(--color-text-primary)' }}>
+        <div style={{ fontSize: '14px', fontFamily: 'var(--font-ui)', color: 'var(--text-1)' }}>
           {label}
         </div>
         {hint && (
-          <div style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+          <div style={{ fontSize: '13px', color: 'var(--text-3)', marginTop: '2px' }}>
             {hint}
           </div>
         )}
@@ -475,15 +475,15 @@ export function SettingsScreen({ onClose }) {
   ].includes(settings.exerciseType);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <div style={{
         position: 'sticky',
         top: 0,
         zIndex: 10,
-        background: 'var(--color-surface)',
-        borderBottom: '1px solid var(--color-border)',
+        background: 'var(--surface)',
+        borderBottom: '1px solid var(--border)',
         padding: '14px 24px',
         display: 'flex',
         alignItems: 'center',
@@ -495,7 +495,7 @@ export function SettingsScreen({ onClose }) {
           fontWeight: 700,
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
-          color: 'var(--color-text-primary)',
+          color: 'var(--text-1)',
         }}>
           Configuración
         </span>
@@ -539,10 +539,10 @@ export function SettingsScreen({ onClose }) {
                       textAlign: 'left',
                       fontFamily: 'var(--font-ui)',
                       fontSize: '14px',
-                      border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border)'}`,
+                      border: `1px solid ${active ? 'var(--amber)' : 'var(--border)'}`,
                       borderRadius: '2px',
-                      background: active ? 'var(--color-accent-dim)' : 'var(--color-surface)',
-                      color: active ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                      background: active ? 'var(--amber-dim)' : 'var(--surface)',
+                      color: active ? 'var(--amber)' : 'var(--text-2)',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -552,8 +552,8 @@ export function SettingsScreen({ onClose }) {
                   >
                     <div style={{
                       width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
-                      background: active ? 'var(--color-accent)' : 'transparent',
-                      border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border-2)'}`,
+                      background: active ? 'var(--amber)' : 'transparent',
+                      border: `1px solid ${active ? 'var(--amber)' : 'var(--border-2)'}`,
                     }} />
                     {opt.label}
                   </button>
@@ -580,15 +580,15 @@ export function SettingsScreen({ onClose }) {
                   fontSize: '15px',
                   letterSpacing: '0.1em',
                   textTransform: 'uppercase',
-                  background: 'var(--color-surface-2)',
-                  border: '1px solid var(--color-border-2)',
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--border-2)',
                   borderRadius: '2px',
-                  color: 'var(--color-text-primary)',
+                  color: 'var(--text-1)',
                   resize: 'vertical',
                   outline: 'none',
                 }}
-                onFocus={e => e.target.style.borderColor = 'var(--color-accent)'}
-                onBlur={e => e.target.style.borderColor = 'var(--color-border-2)'}
+                onFocus={e => e.target.style.borderColor = 'var(--amber)'}
+                onBlur={e => e.target.style.borderColor = 'var(--border-2)'}
               />
             </Field>
           )}
@@ -777,7 +777,7 @@ export function SettingsScreen({ onClose }) {
                 fontFamily: 'var(--font-mono)',
                 fontSize: '15px',
                 fontWeight: 600,
-                color: 'var(--color-accent)',
+                color: 'var(--amber)',
                 minWidth: '42px',
                 textAlign: 'right',
               }}>
@@ -846,10 +846,10 @@ export function SettingsScreen({ onClose }) {
                       textAlign: 'left',
                       fontFamily: 'var(--font-ui)',
                       fontSize: '14px',
-                      border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border)'}`,
+                      border: `1px solid ${active ? 'var(--amber)' : 'var(--border)'}`,
                       borderRadius: '2px',
-                      background: active ? 'var(--color-accent-dim)' : 'var(--color-surface)',
-                      color: active ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                      background: active ? 'var(--amber-dim)' : 'var(--surface)',
+                      color: active ? 'var(--amber)' : 'var(--text-2)',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -859,8 +859,8 @@ export function SettingsScreen({ onClose }) {
                   >
                     <div style={{
                       width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
-                      background: active ? 'var(--color-accent)' : 'transparent',
-                      border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border-2)'}`,
+                      background: active ? 'var(--amber)' : 'transparent',
+                      border: `1px solid ${active ? 'var(--amber)' : 'var(--border-2)'}`,
                     }} />
                     {opt.label}
                   </button>
@@ -884,10 +884,10 @@ export function SettingsScreen({ onClose }) {
                           textAlign: 'left',
                           fontFamily: 'var(--font-ui)',
                           fontSize: '14px',
-                          border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border)'}`,
+                          border: `1px solid ${active ? 'var(--amber)' : 'var(--border)'}`,
                           borderRadius: '2px',
-                          background: active ? 'var(--color-accent-dim)' : 'var(--color-surface)',
-                          color: active ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                          background: active ? 'var(--amber-dim)' : 'var(--surface)',
+                          color: active ? 'var(--amber)' : 'var(--text-2)',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
@@ -897,8 +897,8 @@ export function SettingsScreen({ onClose }) {
                       >
                         <div style={{
                           width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
-                          background: active ? 'var(--color-accent)' : 'transparent',
-                          border: `1px solid ${active ? 'var(--color-accent)' : 'var(--color-border-2)'}`,
+                          background: active ? 'var(--amber)' : 'transparent',
+                          border: `1px solid ${active ? 'var(--amber)' : 'var(--border-2)'}`,
                         }} />
                         {opt.label}
                       </button>
@@ -930,7 +930,7 @@ export function SettingsScreen({ onClose }) {
         </Section>
 
         {/* Footer */}
-        <div style={{ padding: '32px 0 24px', textAlign: 'center', color: 'var(--color-text-muted)', fontFamily: 'var(--font-ui)', fontSize: '12px' }}>
+        <div style={{ padding: '32px 0 24px', textAlign: 'center', color: 'var(--text-3)', fontFamily: 'var(--font-ui)', fontSize: '12px' }}>
           Morse Koch Trainer — Radio Club Córdoba
         </div>
 

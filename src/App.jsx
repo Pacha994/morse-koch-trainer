@@ -23,7 +23,7 @@ function AppContent() {
   const [screen, setScreen] = useState('home');
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--color-bg)' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--bg)' }}>
       {screen === 'home' && (
         <HomeScreen
           onStartTraining={() => setScreen('training')}
