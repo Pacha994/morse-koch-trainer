@@ -1,147 +1,60 @@
 /**
- * ProgressScreen.jsx
- * Pantalla de estadísticas y progreso del usuario.
- *
- * Muestra:
- *   1. Stats globales (tiempo total, sesiones, accuracy promedio)
- *   2. Gráfico de accuracy de las últimas 20 sesiones
- *   3. Heatmap de precisión por carácter
- *   4. Opción de resetear el progreso
+ * ProgressScreen.jsx — Pantalla de progreso rediseñada.
  */
-import React, { useState } from 'react';
+import React from 'react';
 import { useProgress } from '../../context/ProgressContext.jsx';
 import { charAccuracy } from '../../engine/AccuracyCalculator.js';
 
-// ── Mini gráfico de barras para el historial ───────────────────────
 function AccuracyChart({ sessions }) {
   if (!sessions || sessions.length === 0) {
     return (
-      <div
-        className="flex items-center justify-center h-24 rounded-sm"
-        style={{ background: 'var(--color-surface-2)', color: 'var(--color-text-muted)' }}
-      >
-        <span className="font-ui text-xs tracking-widest uppercase">Sin datos aún</span>
+      <div style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface)', border: '1px solid var(--border)' }}>
+        <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'var(--text-3)', letterSpacing: '0.1em' }}>Sin datos todavía</span>
       </div>
     );
   }
-
-  const maxSessions = 20;
-  const displayed   = sessions.slice(-maxSessions);
-  const barWidth    = Math.floor(100 / maxSessions);
-
+  const displayed = sessions.slice(-20);
   return (
-    <div className="space-y-2">
-      {/* Barras */}
-      <div
-        className="flex items-end gap-0.5 h-24 px-1"
-        style={{ background: 'var(--color-surface-2)', borderRadius: '2px', padding: '8px 4px 4px' }}
-      >
-        {/* Espaciadores si hay menos de 20 sesiones */}
-        {Array(maxSessions - displayed.length).fill(null).map((_, i) => (
-          <div key={`empty-${i}`} className="flex-1" />
-        ))}
-        {displayed.map((session, i) => {
-          const acc      = session.accuracy;
-          const barColor = acc >= 90
-            ? 'var(--color-correct)'
-            : acc >= 70
-              ? 'var(--color-accent)'
-              : 'var(--color-error)';
-          const heightPct = Math.max(2, acc); // mínimo 2% para que sea visible
-
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', padding: '12px 12px 8px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '64px' }}>
+        {Array(20 - displayed.length).fill(null).map((_, i) => <div key={`e-${i}`} style={{ flex: 1 }} />)}
+        {displayed.map((s, i) => {
+          const c = s.accuracy >= 90 ? 'var(--green)' : s.accuracy >= 70 ? 'var(--amber)' : 'var(--red)';
           return (
-            <div
-              key={session.id}
-              className="flex-1 flex items-end"
-              title={`Sesión ${i + 1}: ${acc.toFixed(0)}% · Koch L${session.kochLevel} · ${session.speedValue}${session.speedUnit}`}
-            >
-              <div
-                className="w-full rounded-t-sm"
-                style={{
-                  height:     `${heightPct}%`,
-                  background: barColor,
-                  opacity:    0.8,
-                  minHeight:  '2px',
-                }}
-              />
-            </div>
+            <div key={s.id} title={`${s.accuracy.toFixed(0)}% · L${s.kochLevel}`}
+              style={{ flex: 1, background: c, opacity: 0.75, borderRadius: '1px 1px 0 0', height: `${Math.max(3, s.accuracy)}%`, transition: 'height 0.3s ease', cursor: 'default' }} />
           );
         })}
       </div>
-
-      {/* Eje Y: etiquetas */}
-      <div className="flex justify-between px-1">
-        <span className="font-ui text-xs" style={{ color: 'var(--color-text-muted)' }}>
-          {displayed.length > 0 ? `L${displayed[0].kochLevel}` : ''}
-        </span>
-        <span className="font-ui text-xs" style={{ color: 'var(--color-text-muted)' }}>
-          Últimas {displayed.length} sesiones
-        </span>
-        <span className="font-ui text-xs" style={{ color: 'var(--color-text-muted)' }}>
-          {displayed.length > 0 ? `L${displayed[displayed.length - 1].kochLevel}` : ''}
-        </span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
+        <span style={{ fontFamily: 'var(--font-ui)', fontSize: '10px', color: 'var(--text-3)' }}>últimas {displayed.length} sesiones</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--text-3)' }}>100%</span>
       </div>
     </div>
   );
 }
 
-// ── Heatmap de precisión por carácter ─────────────────────────────
-function CharacterHeatmap({ characterStats }) {
+function CharHeatmap({ characterStats }) {
   const entries = Object.entries(characterStats);
+  if (entries.length === 0) return (
+    <div style={{ height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface)', border: '1px solid var(--border)' }}>
+      <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'var(--text-3)', letterSpacing: '0.1em' }}>Sin datos todavía</span>
+    </div>
+  );
 
-  if (entries.length === 0) {
-    return (
-      <div
-        className="flex items-center justify-center h-20 rounded-sm"
-        style={{ background: 'var(--color-surface-2)', color: 'var(--color-text-muted)' }}
-      >
-        <span className="font-ui text-xs tracking-widest uppercase">Sin datos aún</span>
-      </div>
-    );
-  }
-
-  // Ordenar alfabéticamente para consistencia visual
-  const sorted = entries
-    .map(([char, stats]) => ({
-      char,
-      acc:   charAccuracy(stats) ?? 0,
-      total: stats.total,
-    }))
-    .sort((a, b) => a.char.localeCompare(b.char));
+  const sorted = entries.map(([char, stats]) => ({ char, acc: charAccuracy(stats) ?? 0, total: stats.total }))
+    .sort((a, b) => a.acc - b.acc);
 
   return (
-    <div className="flex flex-wrap gap-1">
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
       {sorted.map(({ char, acc, total }) => {
-        // Color del heatmap: rojo (0%) → ámbar (70%) → verde (100%)
-        let bg, textColor;
-        if (acc >= 90) {
-          bg        = `rgba(34,197,94,${0.1 + (acc - 90) / 100})`;
-          textColor = 'var(--color-correct)';
-        } else if (acc >= 70) {
-          bg        = `rgba(245,158,11,${0.1 + (acc - 70) / 100})`;
-          textColor = 'var(--color-accent)';
-        } else {
-          bg        = `rgba(239,68,68,${0.1 + (100 - acc) / 200})`;
-          textColor = 'var(--color-error)';
-        }
-
+        const c = acc >= 90 ? 'var(--green)' : acc >= 70 ? 'var(--amber)' : 'var(--red)';
+        const bg = acc >= 90 ? 'rgba(34,197,94,0.1)' : acc >= 70 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)';
         return (
-          <div
-            key={char}
-            className="flex flex-col items-center px-2.5 py-1.5 rounded-sm border"
-            style={{
-              background:  bg,
-              borderColor: 'rgba(255,255,255,0.05)',
-              minWidth:    '3rem',
-            }}
-            title={`${char}: ${acc.toFixed(0)}% (${total} veces)`}
-          >
-            <span className="morse-text text-base" style={{ color: textColor }}>
-              {char}
-            </span>
-            <span className="font-ui text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
-              {acc.toFixed(0)}%
-            </span>
+          <div key={char} title={`${char}: ${acc.toFixed(0)}% (${total} veces)`}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 8px', border: `1px solid ${c}33`, background: bg, borderRadius: '2px', minWidth: '40px', gap: '2px' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '15px', fontWeight: 700, color: 'var(--text-1)', lineHeight: 1 }}>{char}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: c, lineHeight: 1 }}>{acc.toFixed(0)}%</span>
           </div>
         );
       })}
@@ -149,166 +62,78 @@ function CharacterHeatmap({ characterStats }) {
   );
 }
 
-/**
- * @param {object}   props
- * @param {Function} props.onClose - Volver al home
- */
 export function ProgressScreen({ onClose }) {
-  const {
-    progress,
-    getRecentSessions,
-    getRecentAccuracy,
-    formattedTotalTime,
-    resetProgress,
-  } = useProgress();
-
-  const recentSessions  = getRecentSessions(20);
-  const recentAccuracy  = getRecentAccuracy(5);
-  const allSessions     = [...progress.sessionHistory]; // todas, para el gráfico
-
-  // Calcular el mejor nivel Koch alcanzado
-  const maxKochLevel = allSessions.length > 0
-    ? Math.max(...allSessions.map(s => s.kochLevel))
-    : 0;
+  const { progress, getRecentSessions, getRecentAccuracy, formattedTotalTime, resetProgress } = useProgress();
+  const recentSessions = getRecentSessions(20);
+  const recentAccuracy = getRecentAccuracy(5);
+  const allSessions    = [...progress.sessionHistory];
+  const maxKoch = allSessions.length > 0 ? Math.max(...allSessions.map(s => s.kochLevel)) : 0;
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ background: 'var(--color-bg)' }}
-    >
-      {/* ── Header ──────────────────────────────────────────── */}
-      <div
-        className="flex items-center justify-between px-6 py-4 border-b sticky top-0 z-10"
-        style={{
-          borderColor: 'var(--color-border)',
-          background:  'var(--color-surface)',
-        }}
-      >
-        <h1
-          className="font-ui text-xl font-bold tracking-widest uppercase"
-          style={{ color: 'var(--color-text-primary)' }}
-        >
-          Progreso
-        </h1>
-        <button className="btn-secondary" onClick={onClose}>← Volver</button>
+    <div style={{ minHeight: '100dvh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
+
+      {/* Header */}
+      <div style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', flexShrink: 0 }}>
+        <span style={{ fontFamily: 'var(--font-ui)', fontSize: '15px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-1)' }}>Progreso</span>
+        <button className="btn btn-secondary" onClick={onClose}>← Volver</button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-8 max-w-2xl mx-auto w-full space-y-8">
+      <div style={{ flex: 1, overflowY: 'auto', maxWidth: '600px', width: '100%', margin: '0 auto', padding: '28px 24px 48px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
 
-        {/* ── 1. Stats globales ────────────────────────────── */}
-        <div
-          className="grid grid-cols-2 gap-px"
-          style={{ background: 'var(--color-border)' }}
-        >
+        {/* Stats globales */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: 'var(--border)' }}>
           {[
-            { label: 'Sesiones',           value: progress.totalSessions },
-            { label: 'Tiempo total',        value: formattedTotalTime || '0m' },
-            { label: 'Mejor nivel Koch',    value: maxKochLevel > 0 ? `L${maxKochLevel}` : '—' },
-            { label: 'Accuracy reciente',   value: recentAccuracy != null ? `${recentAccuracy.toFixed(0)}%` : '—' },
-          ].map(({ label, value }) => (
-            <div
-              key={label}
-              className="flex flex-col items-center py-5"
-              style={{ background: 'var(--color-surface)' }}
-            >
-              <span
-                className="font-mono text-2xl font-bold"
-                style={{ color: 'var(--color-text-primary)' }}
-              >
-                {value}
-              </span>
-              <span
-                className="font-ui text-xs tracking-widest uppercase mt-1"
-                style={{ color: 'var(--color-text-muted)' }}
-              >
-                {label}
-              </span>
+            { l: 'Sesiones',         v: progress.totalSessions },
+            { l: 'Tiempo total',     v: formattedTotalTime || '0m' },
+            { l: 'Mejor nivel Koch', v: maxKoch > 0 ? `L${maxKoch}` : '—' },
+            { l: 'Acc reciente',     v: recentAccuracy != null ? `${recentAccuracy.toFixed(0)}%` : '—',
+              c: recentAccuracy != null ? (recentAccuracy >= 90 ? 'var(--green)' : recentAccuracy >= 70 ? 'var(--amber)' : 'var(--red)') : undefined },
+          ].map(({ l, v, c }) => (
+            <div key={l} style={{ padding: '18px 20px', background: 'var(--surface)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '22px', fontWeight: 700, color: c ?? 'var(--text-1)', lineHeight: 1 }}>{v}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: '11px', color: 'var(--text-3)', marginTop: '4px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{l}</div>
             </div>
           ))}
         </div>
 
-        {/* ── 2. Gráfico de accuracy ───────────────────────── */}
+        {/* Gráfico */}
         <div>
-          <h2
-            className="font-ui text-xs tracking-widest uppercase mb-3"
-            style={{ color: 'var(--color-text-muted)' }}
-          >
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: '10px' }}>
             Accuracy por sesión
-          </h2>
+          </div>
           <AccuracyChart sessions={allSessions} />
         </div>
 
-        {/* ── 3. Heatmap de caracteres ─────────────────────── */}
+        {/* Heatmap */}
         <div>
-          <h2
-            className="font-ui text-xs tracking-widest uppercase mb-3"
-            style={{ color: 'var(--color-text-muted)' }}
-          >
-            Precisión por carácter (acumulada)
-          </h2>
-          <CharacterHeatmap characterStats={progress.characterStats} />
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: '10px' }}>
+            Precisión por carácter
+          </div>
+          <CharHeatmap characterStats={progress.characterStats} />
         </div>
 
-        {/* ── 4. Últimas sesiones ──────────────────────────── */}
+        {/* Historial */}
         {recentSessions.length > 0 && (
           <div>
-            <h2
-              className="font-ui text-xs tracking-widest uppercase mb-3"
-              style={{ color: 'var(--color-text-muted)' }}
-            >
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: '10px' }}>
               Últimas sesiones
-            </h2>
-            <div className="space-y-1">
-              {recentSessions.map((session) => {
-                const date = new Date(session.date);
-                const dateStr = date.toLocaleDateString('es-AR', {
-                  day: '2-digit', month: '2-digit',
-                });
-                const timeStr = date.toLocaleTimeString('es-AR', {
-                  hour: '2-digit', minute: '2-digit',
-                });
-                const accColor = session.accuracy >= 90
-                  ? 'var(--color-correct)'
-                  : session.accuracy >= 70
-                    ? 'var(--color-accent)'
-                    : 'var(--color-error)';
-
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              {recentSessions.map(s => {
+                const c = s.accuracy >= 90 ? 'var(--green)' : s.accuracy >= 70 ? 'var(--amber)' : 'var(--red)';
+                const d = new Date(s.date);
                 return (
-                  <div
-                    key={session.id}
-                    className="flex items-center justify-between px-4 py-3 rounded-sm"
-                    style={{ background: 'var(--color-surface)' }}
-                  >
-                    <div className="flex items-center gap-4">
-                      <span
-                        className="font-mono text-lg font-bold w-12"
-                        style={{ color: accColor }}
-                      >
-                        {session.accuracy.toFixed(0)}%
-                      </span>
+                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', fontWeight: 700, color: c, minWidth: '50px' }}>{s.accuracy.toFixed(0)}%</span>
                       <div>
-                        <span
-                          className="font-ui text-xs tracking-widest uppercase"
-                          style={{ color: 'var(--color-text-secondary)' }}
-                        >
-                          Koch L{session.kochLevel}
-                        </span>
-                        <span
-                          className="font-ui text-xs ml-3"
-                          style={{ color: 'var(--color-text-muted)' }}
-                        >
-                          {session.speedValue} {session.speedUnit.toUpperCase()}
-                          {session.durationSeconds
-                            ? ` · ${Math.floor(session.durationSeconds / 60)}m`
-                            : ''}
-                        </span>
+                        <span style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', color: 'var(--text-2)' }}>Koch L{s.kochLevel}</span>
+                        <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'var(--text-3)', marginLeft: '10px' }}>{s.speedValue} {s.speedUnit.toUpperCase()}</span>
+                        {s.durationSeconds && <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'var(--text-3)', marginLeft: '6px' }}>· {Math.floor(s.durationSeconds / 60)}m</span>}
                       </div>
                     </div>
-                    <span
-                      className="font-ui text-xs"
-                      style={{ color: 'var(--color-text-muted)' }}
-                    >
-                      {dateStr} {timeStr}
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-3)' }}>
+                      {d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })} {d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                 );
@@ -317,25 +142,14 @@ export function ProgressScreen({ onClose }) {
           </div>
         )}
 
-        {/* ── 5. Resetear progreso ─────────────────────────── */}
-        <div
-          className="px-4 py-4 border rounded-sm"
-          style={{ borderColor: 'var(--color-border)' }}
-        >
-          <p
-            className="font-ui text-xs tracking-wide mb-3"
-            style={{ color: 'var(--color-text-muted)' }}
-          >
-            Resetear borra todo el historial de sesiones y las estadísticas por carácter. Esta acción no se puede deshacer.
+        {/* Reset */}
+        <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--surface)' }}>
+          <p style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', color: 'var(--text-3)', marginBottom: '12px', lineHeight: 1.5 }}>
+            Resetear borra todo el historial y estadísticas. No se puede deshacer.
           </p>
           <button
-            className="btn-ghost text-xs"
-            style={{ color: 'var(--color-error)', borderColor: 'var(--color-error)', border: '1px solid' }}
-            onClick={() => {
-              if (window.confirm('¿Borrar todo el historial de progreso? Esta acción es irreversible.')) {
-                resetProgress();
-              }
-            }}
+            onClick={() => { if (confirm('¿Borrar todo el historial de progreso?')) resetProgress(); }}
+            style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', color: 'var(--red)', background: 'none', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '2px', padding: '7px 14px', cursor: 'pointer' }}
           >
             Resetear progreso
           </button>

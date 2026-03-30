@@ -1,14 +1,278 @@
 /**
- * HomeScreen.jsx
- * Pantalla de inicio. Muestra el estado actual y el acceso rápido a todo.
+ * HomeScreen.jsx — Pantalla de inicio rediseñada.
+ * Estética: panel de radio de precisión.
  */
 import React from 'react';
 import { useSettings }  from '../../context/SettingsContext.jsx';
 import { useProgress }  from '../../context/ProgressContext.jsx';
 import { G4FON_ORDER, LCWO_ORDER } from '../../constants/kochSequences.js';
+import { MORSE_CODE } from '../../constants/morseCodes.js';
+
+const S = {
+  root: {
+    minHeight: '100dvh',
+    background: 'var(--bg)',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+
+  // Header horizontal: logo + navegación
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 32px',
+    height: '52px',
+    borderBottom: '1px solid var(--border)',
+    background: 'var(--surface)',
+    flexShrink: 0,
+  },
+  logoGroup: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  logoBadge: {
+    width: '28px',
+    height: '28px',
+    border: '1px solid var(--amber)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '10px',
+    fontWeight: 700,
+    color: 'var(--amber)',
+    letterSpacing: '0.05em',
+  },
+  appName: {
+    fontFamily: 'var(--font-ui)',
+    fontSize: '14px',
+    fontWeight: 700,
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
+    color: 'var(--text-1)',
+    lineHeight: 1,
+  },
+  clubName: {
+    fontFamily: 'var(--font-ui)',
+    fontSize: '11px',
+    color: 'var(--text-3)',
+    letterSpacing: '0.06em',
+  },
+  navGroup: {
+    display: 'flex',
+    gap: '4px',
+  },
+
+  // Contenido central
+  main: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '40px 32px',
+    gap: '32px',
+  },
+
+  // Panel de estado: 2 columnas
+  statusPanel: {
+    width: '100%',
+    maxWidth: '520px',
+    border: '1px solid var(--border)',
+    background: 'var(--surface)',
+  },
+
+  // Fila superior: nivel + velocidad
+  panelTop: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    borderBottom: '1px solid var(--border)',
+  },
+  panelCell: {
+    padding: '20px 24px',
+  },
+  panelCellRight: {
+    padding: '20px 24px',
+    borderLeft: '1px solid var(--border)',
+    textAlign: 'right',
+  },
+  cellLabel: {
+    fontFamily: 'var(--font-ui)',
+    fontSize: '10px',
+    fontWeight: 700,
+    letterSpacing: '0.2em',
+    textTransform: 'uppercase',
+    color: 'var(--text-3)',
+    marginBottom: '6px',
+  },
+  levelNumber: {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '52px',
+    fontWeight: 700,
+    color: 'var(--text-1)',
+    lineHeight: 1,
+  },
+  speedNumber: {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '44px',
+    fontWeight: 700,
+    color: 'var(--amber)',
+    lineHeight: 1,
+  },
+  speedUnit: {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '14px',
+    fontWeight: 500,
+    color: 'var(--text-3)',
+    marginLeft: '4px',
+  },
+
+  // Caracteres activos
+  charsRow: {
+    padding: '16px 24px',
+    borderBottom: '1px solid var(--border)',
+  },
+  charsLabel: {
+    fontFamily: 'var(--font-ui)',
+    fontSize: '10px',
+    fontWeight: 700,
+    letterSpacing: '0.2em',
+    textTransform: 'uppercase',
+    color: 'var(--text-3)',
+    marginBottom: '10px',
+  },
+  charsGrid: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '4px',
+  },
+  charChip: (isHard, isNew) => ({
+    display: 'inline-flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: '5px 8px',
+    border: `1px solid ${isHard ? 'rgba(245,158,11,0.4)' : 'var(--border)'}`,
+    background: isHard ? 'var(--amber-dim)' : 'var(--surface-2)',
+    borderRadius: '2px',
+    gap: '2px',
+  }),
+  charLetter: (isHard) => ({
+    fontFamily: 'var(--font-mono)',
+    fontSize: '14px',
+    fontWeight: 700,
+    color: isHard ? 'var(--amber)' : 'var(--text-2)',
+    lineHeight: 1,
+  }),
+  charCode: {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '8px',
+    color: 'var(--text-3)',
+    letterSpacing: '0.1em',
+    lineHeight: 1,
+  },
+
+  // Stats rápidas
+  statsRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr 1fr',
+  },
+  statCell: (idx) => ({
+    padding: '14px 16px',
+    textAlign: 'center',
+    borderLeft: idx > 0 ? '1px solid var(--border)' : 'none',
+  }),
+  statValue: {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '16px',
+    fontWeight: 600,
+    color: 'var(--text-1)',
+    lineHeight: 1,
+  },
+  statLabel: {
+    fontFamily: 'var(--font-ui)',
+    fontSize: '11px',
+    color: 'var(--text-3)',
+    marginTop: '4px',
+  },
+
+  // Botón empezar
+  startBtn: {
+    width: '100%',
+    maxWidth: '520px',
+  },
+
+  // Atajos
+  hints: {
+    display: 'flex',
+    gap: '20px',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  hint: {
+    fontFamily: 'var(--font-ui)',
+    fontSize: '12px',
+    color: 'var(--text-3)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+  hintKey: {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '11px',
+    color: 'var(--text-2)',
+    background: 'var(--surface-2)',
+    border: '1px solid var(--border-2)',
+    borderRadius: '2px',
+    padding: '2px 6px',
+  },
+
+  // Stats globales (si hay historial)
+  globalStats: {
+    display: 'flex',
+    gap: '24px',
+    padding: '12px 20px',
+    border: '1px solid var(--border)',
+    background: 'var(--surface)',
+  },
+  globalStat: {
+    textAlign: 'center',
+  },
+  globalValue: {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '15px',
+    fontWeight: 600,
+    color: 'var(--text-2)',
+    lineHeight: 1,
+  },
+  globalLabel: {
+    fontFamily: 'var(--font-ui)',
+    fontSize: '10px',
+    color: 'var(--text-3)',
+    marginTop: '3px',
+    letterSpacing: '0.06em',
+  },
+
+  // Footer
+  footer: {
+    padding: '12px 32px',
+    borderTop: '1px solid var(--border)',
+    background: 'var(--surface)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerText: {
+    fontFamily: 'var(--font-ui)',
+    fontSize: '11px',
+    color: 'var(--text-3)',
+    letterSpacing: '0.06em',
+  },
+};
 
 export function HomeScreen({ onStartTraining, onOpenSettings, onOpenProgress }) {
-  const { settings }              = useSettings();
+  const { settings }   = useSettings();
   const { progress, getRecentAccuracy, formattedTotalTime } = useProgress();
 
   const sequence    = settings.exerciseType === 'koch_lcwo' ? LCWO_ORDER : G4FON_ORDER;
@@ -16,103 +280,78 @@ export function HomeScreen({ onStartTraining, onOpenSettings, onOpenProgress }) 
   const seqName     = settings.exerciseType === 'koch_lcwo' ? 'LCWO' : 'G4FON';
   const recentAcc   = getRecentAccuracy(5);
 
+  // Los últimos 2 = auto-hard si está activado
+  const autoHardSet = settings.autoHardLetters
+    ? new Set([activeChars[activeChars.length - 1], activeChars[activeChars.length - 2]].filter(Boolean))
+    : new Set();
+  const hardSet = new Set([...settings.hardLetters, ...autoHardSet]);
+
+  // Formato de duración
+  const durSec = settings.exerciseDuration;
+  const durLabel = durSec < 60 ? `${durSec}s` : `${durSec / 60}m`;
+
+  // Formato de grupo
+  const groupLabel = settings.wordLength === 0 ? 'Variable' : `${settings.wordLength}`;
+
+  // Accuracy reciente con color
+  const accColor = recentAcc == null
+    ? 'var(--text-3)'
+    : recentAcc >= 90
+      ? 'var(--green)'
+      : recentAcc >= 70
+        ? 'var(--amber)'
+        : 'var(--red)';
+
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--color-bg)' }}>
+    <div style={S.root}>
 
-      {/* ── Header ──────────────────────────────────────────── */}
-      <header
-        className="flex items-center justify-between px-5 py-3.5 border-b"
-        style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="font-mono text-xs tracking-widest px-2 py-1 border"
-            style={{ color: 'var(--color-accent)', borderColor: 'var(--color-accent)', opacity: 0.9 }}
-          >
-            CW
-          </div>
+      {/* Header */}
+      <header style={S.header}>
+        <div style={S.logoGroup}>
+          <div style={S.logoBadge}>CW</div>
           <div>
-            <h1
-              className="font-ui text-lg font-bold tracking-widest uppercase leading-none"
-              style={{ color: 'var(--color-text-primary)' }}
-            >
-              Koch Trainer
-            </h1>
-            <p className="font-ui text-xs tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
-              Radio Club Córdoba
-            </p>
+            <div style={S.appName}>Koch Trainer</div>
+            <div style={S.clubName}>Radio Club Córdoba</div>
           </div>
         </div>
-
-        <div className="flex gap-1">
-          <button className="btn-ghost text-xs" onClick={onOpenProgress}>
-            📈 Progreso
-          </button>
-          <button className="btn-ghost text-xs" onClick={onOpenSettings}>
-            ⚙ Settings
-          </button>
-        </div>
+        <nav style={S.navGroup}>
+          <button className="btn btn-ghost" onClick={onOpenProgress}>Progreso</button>
+          <button className="btn btn-ghost" onClick={onOpenSettings}>Settings</button>
+        </nav>
       </header>
 
-      {/* ── Cuerpo ───────────────────────────────────────────── */}
-      <main className="flex-1 flex flex-col items-center justify-center px-5 py-10 gap-8">
+      {/* Main */}
+      <main style={S.main}>
 
-        {/* ── Card: estado actual ──────────────────────────── */}
-        <div
-          className="w-full max-w-md border"
-          style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
-        >
-          {/* Nivel y velocidad */}
-          <div
-            className="flex items-center justify-between px-6 py-5 border-b"
-            style={{ borderColor: 'var(--color-border)' }}
-          >
-            <div>
-              <p className="font-ui text-xs tracking-widest uppercase" style={{ color: 'var(--color-text-muted)' }}>
-                Nivel Koch · {seqName}
-              </p>
-              <p className="font-ui text-5xl font-bold mt-0.5 leading-none" style={{ color: 'var(--color-text-primary)' }}>
-                {settings.kochLevel}
-              </p>
+        {/* Panel de estado */}
+        <div style={S.statusPanel}>
+
+          {/* Nivel + Velocidad */}
+          <div style={S.panelTop}>
+            <div style={S.panelCell}>
+              <div style={S.cellLabel}>Nivel Koch · {seqName}</div>
+              <div style={S.levelNumber}>{settings.kochLevel}</div>
             </div>
-            <div className="text-right">
-              <p className="font-ui text-xs tracking-widest uppercase" style={{ color: 'var(--color-text-muted)' }}>
-                Velocidad
-              </p>
-              <p className="font-mono text-3xl font-bold mt-0.5 leading-none" style={{ color: 'var(--color-accent)' }}>
-                {settings.speedValue}
-                <span className="text-base ml-1 font-normal" style={{ color: 'var(--color-text-muted)' }}>
-                  {settings.speedUnit.toUpperCase()}
-                </span>
-              </p>
+            <div style={S.panelCellRight}>
+              <div style={S.cellLabel}>Velocidad</div>
+              <div>
+                <span style={S.speedNumber}>{settings.speedValue}</span>
+                <span style={S.speedUnit}>{settings.speedUnit.toUpperCase()}</span>
+              </div>
             </div>
           </div>
 
           {/* Caracteres activos */}
-          <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
-            <p className="font-ui text-xs tracking-widest uppercase mb-3" style={{ color: 'var(--color-text-muted)' }}>
-              Caracteres activos ({activeChars.length})
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {activeChars.map((char, i) => {
-                const isAutoHard = settings.autoHardLetters && i >= activeChars.length - 2;
+          <div style={S.charsRow}>
+            <div style={S.charsLabel}>Caracteres activos ({activeChars.length})</div>
+            <div style={S.charsGrid}>
+              {activeChars.map(char => {
+                const isHard = hardSet.has(char);
+                const code   = MORSE_CODE[char] ?? '';
                 return (
-                  <div
-                    key={char}
-                    className="flex items-center justify-center rounded-sm px-2 py-1"
-                    style={{
-                      background:  isAutoHard ? 'var(--color-accent-dim)' : 'var(--color-surface-2)',
-                      border:      `1px solid ${isAutoHard ? 'rgba(245,158,11,0.35)' : 'var(--color-border)'}`,
-                      minWidth:    '2rem',
-                    }}
-                    title={isAutoHard ? 'Auto hard letter' : ''}
-                  >
-                    <span
-                      className="morse-text text-sm"
-                      style={{ color: isAutoHard ? 'var(--color-accent)' : 'var(--color-text-primary)' }}
-                    >
-                      {char}
-                    </span>
+                  <div key={char} style={S.charChip(isHard)} title={isHard ? 'Hard letter' : ''}>
+                    <span style={S.charLetter(isHard)}>{char}</span>
+                    <span style={S.charCode}>{code}</span>
                   </div>
                 );
               })}
@@ -120,77 +359,63 @@ export function HomeScreen({ onStartTraining, onOpenSettings, onOpenProgress }) 
           </div>
 
           {/* Stats rápidas */}
-          <div className="px-6 py-3.5 grid grid-cols-3 gap-2">
+          <div style={S.statsRow}>
             {[
-              { label: 'Duración', value: `${Math.floor(settings.exerciseDuration / 60)}m` },
-              { label: 'Grupos',   value: settings.wordLengthMode === 'variable' ? `≤${settings.wordLength}` : `${settings.wordLength}` },
-              {
-                label: 'Acc reciente',
-                value: recentAcc != null ? `${recentAcc.toFixed(0)}%` : '—',
-                color: recentAcc != null
-                  ? (recentAcc >= 90 ? 'var(--color-correct)' : recentAcc >= 70 ? 'var(--color-accent)' : 'var(--color-error)')
-                  : 'var(--color-text-muted)',
-              },
-            ].map(({ label, value, color }) => (
-              <div key={label} className="text-center">
-                <p className="font-ui text-xs" style={{ color: 'var(--color-text-muted)' }}>{label}</p>
-                <p
-                  className="font-mono text-sm font-bold mt-0.5"
-                  style={{ color: color ?? 'var(--color-text-secondary)' }}
-                >
-                  {value}
-                </p>
+              { label: 'Duración',    value: durLabel },
+              { label: 'Grupo',       value: groupLabel },
+              { label: 'Acc reciente', value: recentAcc != null ? `${recentAcc.toFixed(0)}%` : '—', color: accColor },
+            ].map(({ label, value, color }, idx) => (
+              <div key={label} style={S.statCell(idx)}>
+                <div style={{ ...S.statValue, color: color ?? 'var(--text-1)' }}>{value}</div>
+                <div style={S.statLabel}>{label}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ── Botón EMPEZAR ────────────────────────────────── */}
-        <button
-          className="btn-primary"
-          style={{ fontSize: '1.25rem', padding: '0.9rem 4rem', letterSpacing: '0.2em' }}
-          onClick={onStartTraining}
-        >
-          EMPEZAR
-        </button>
+        {/* Botón EMPEZAR */}
+        <div style={S.startBtn}>
+          <button className="btn btn-primary" style={{ width: '100%', fontSize: '16px', padding: '16px' }} onClick={onStartTraining}>
+            EMPEZAR
+          </button>
+        </div>
 
-        {/* Atajos de teclado */}
-        <p className="font-ui text-xs tracking-wide text-center" style={{ color: 'var(--color-text-muted)', opacity: 0.6 }}>
-          Letras/números · Enter confirma · Esc pausa · Backspace borra
-        </p>
+        {/* Atajos */}
+        <div style={S.hints}>
+          {[
+            ['Enter', 'confirmar'],
+            ['Esc', 'pausa'],
+            ['Backspace', 'borrar'],
+          ].map(([key, desc]) => (
+            <div key={key} style={S.hint}>
+              <span style={S.hintKey}>{key}</span>
+              <span>{desc}</span>
+            </div>
+          ))}
+        </div>
 
-        {/* ── Stats globales (si hay historial) ─────────────── */}
+        {/* Stats globales */}
         {progress.totalSessions > 0 && (
-          <div
-            className="flex items-center gap-6 px-5 py-3 border rounded-sm"
-            style={{
-              background:  'var(--color-surface)',
-              borderColor: 'var(--color-border)',
-              opacity:     0.7,
-            }}
-          >
+          <div style={S.globalStats}>
             {[
               { label: 'Sesiones',  value: progress.totalSessions },
-              { label: 'Tiempo',    value: formattedTotalTime },
+              { label: 'Tiempo',    value: formattedTotalTime || '0m' },
               { label: 'Koch max',  value: `L${Math.max(...progress.sessionHistory.map(s => s.kochLevel))}` },
             ].map(({ label, value }) => (
-              <div key={label} className="text-center">
-                <p className="font-mono text-sm font-bold" style={{ color: 'var(--color-text-secondary)' }}>{value}</p>
-                <p className="font-ui text-xs" style={{ color: 'var(--color-text-muted)' }}>{label}</p>
+              <div key={label} style={S.globalStat}>
+                <div style={S.globalValue}>{value}</div>
+                <div style={S.globalLabel}>{label}</div>
               </div>
             ))}
           </div>
         )}
       </main>
 
-      {/* ── Footer ──────────────────────────────────────────── */}
-      <footer
-        className="px-5 py-3 border-t text-center"
-        style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
-      >
-        <p className="font-ui text-xs tracking-wide" style={{ color: 'var(--color-text-muted)' }}>
-          Método Koch · Secuencia {seqName} · Fase 2
-        </p>
+      {/* Footer */}
+      <footer style={S.footer}>
+        <span style={S.footerText}>
+          Método Koch · Secuencia {seqName} · {settings.charSpacing !== 1.0 ? `Farnsworth ${settings.charSpacing}×` : 'Spacing estándar'}
+        </span>
       </footer>
     </div>
   );

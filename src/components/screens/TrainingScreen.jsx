@@ -1,49 +1,28 @@
 /**
- * TrainingScreen.jsx
- * Pantalla principal de entrenamiento.
- * Orquesta todos los estados de la sesión y conecta audio, input, feedback y progreso.
+ * TrainingScreen.jsx — Pantalla de entrenamiento rediseñada.
  */
 import React, { useEffect, useRef } from 'react';
 import { useAudioPlayer }     from '../../hooks/useAudioPlayer.js';
 import { useTrainingSession, SESSION_STATE } from '../../hooks/useTrainingSession.js';
 import { useKeyboardInput }   from '../../hooks/useKeyboardInput.js';
 import { useSettings }        from '../../context/SettingsContext.jsx';
-import { AudioIndicator }     from '../training/AudioIndicator.jsx';
 import { GroupFeedback }      from '../training/GroupFeedback.jsx';
 import { SessionSummary }     from './SessionSummary.jsx';
 import { G4FON_ORDER, LCWO_ORDER } from '../../constants/kochSequences.js';
 
-/**
- * @param {object}   props
- * @param {Function} props.onHome     - Callback para volver al home
- * @param {Function} props.onProgress - Callback para ir a la pantalla de progreso
- */
+const INPUT_TIMEOUT_SEC = 4;
+
 export function TrainingScreen({ onHome, onProgress }) {
   const { settings } = useSettings();
-
-  // ── Audio ─────────────────────────────────────────────────
   const { playGroup, stop: stopAudio, initAudio } = useAudioPlayer();
 
-  // ── Sesión ────────────────────────────────────────────────
   const {
-    sessionState,
-    currentGroup,
-    inputText,
-    setInputText,
-    lastFeedback,
-    timeRemaining,
-    inputTimeout,
-    countdownSec,
-    sessionResults,
-    sessionStats,
-    startSession,
-    togglePause,
-    endSession,
-    resetSession,
-    confirmInput,
+    sessionState, currentGroup, inputText, setInputText,
+    lastFeedback, timeRemaining, inputTimeout, countdownSec,
+    sessionResults, sessionStats,
+    startSession, togglePause, endSession, resetSession, confirmInput,
   } = useTrainingSession({ settings, playGroup, stopAudio });
 
-  // Trackear duración real de la sesión para el summary
   const sessionStartTime = useRef(null);
   const [durationSeconds, setDurationSeconds] = React.useState(0);
 
@@ -56,43 +35,20 @@ export function TrainingScreen({ onHome, onProgress }) {
     }
   }, [sessionState]);
 
-  // ── Keyboard input ────────────────────────────────────────
-  const inputEnabled =
-    sessionState === SESSION_STATE.PLAYING_AUDIO ||
-    sessionState === SESSION_STATE.WAITING_INPUT;
-
+  const inputEnabled = sessionState === SESSION_STATE.PLAYING_AUDIO || sessionState === SESSION_STATE.WAITING_INPUT;
   const { inputText: kbText, clearInput } = useKeyboardInput({
-    enabled:   inputEnabled,
-    onConfirm: confirmInput,
-    onPause:   togglePause,
-    onRepeat:  () => { /* Fase 3: repetir grupo */ },
+    enabled: inputEnabled, onConfirm: confirmInput, onPause: togglePause, onRepeat: () => {},
   });
+  useEffect(() => { if (inputEnabled) setInputText(kbText); }, [kbText, inputEnabled, setInputText]);
+  useEffect(() => { clearInput(); }, [currentGroup]);
 
-  // Sincronizar texto capturado → estado de sesión
-  useEffect(() => {
-    if (inputEnabled) setInputText(kbText);
-  }, [kbText, inputEnabled, setInputText]);
+  const handleStart = () => { initAudio(); sessionStartTime.current = null; startSession(); };
 
-  // Limpiar buffer de teclado al cambiar grupo
-  useEffect(() => {
-    clearInput();
-  }, [currentGroup]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Inicializar audio + arrancar sesión ───────────────────
-  const handleStart = () => {
-    initAudio(); // Política autoplay: necesita interacción del usuario
-    sessionStartTime.current = null;
-    startSession();
-  };
-
-  // ── Summary ───────────────────────────────────────────────
   if (sessionState === SESSION_STATE.FINISHED && sessionStats) {
     return (
       <SessionSummary
-        sessionStats={sessionStats}
-        sessionResults={sessionResults}
-        settings={settings}
-        durationSeconds={durationSeconds}
+        sessionStats={sessionStats} sessionResults={sessionResults}
+        settings={settings} durationSeconds={durationSeconds}
         onRestart={() => { resetSession(); handleStart(); }}
         onHome={() => { resetSession(); onHome(); }}
         onProgress={() => { resetSession(); onProgress(); }}
@@ -100,245 +56,198 @@ export function TrainingScreen({ onHome, onProgress }) {
     );
   }
 
-  // ── Helpers ───────────────────────────────────────────────
-  const mins     = Math.floor(timeRemaining / 60);
-  const secs     = String(timeRemaining % 60).padStart(2, '0');
-  const sizeClass = {
-    small: 'morse-sm', medium: 'morse-md', large: 'morse-lg', xlarge: 'morse-xl',
-  }[settings.fontSize] ?? 'morse-md';
+  const mins = Math.floor(timeRemaining / 60);
+  const secs = String(timeRemaining % 60).padStart(2, '0');
 
-  const activeSequence = settings.exerciseType === 'koch_lcwo' ? LCWO_ORDER : G4FON_ORDER;
-  const activeChars    = activeSequence.slice(0, settings.kochLevel).join(' ');
+  const fontSize = { small: 'mono-sm', medium: 'mono-md', large: 'mono-lg', xlarge: 'mono-xl' }[settings.fontSize] ?? 'mono-md';
+  const sequence = settings.exerciseType === 'koch_lcwo' ? LCWO_ORDER : G4FON_ORDER;
+  const activeStr = sequence.slice(0, settings.kochLevel).join(' ');
+  const isActive = sessionState !== SESSION_STATE.IDLE && sessionState !== SESSION_STATE.COUNTDOWN;
+
+  // Tiempo en rojo cuando queda poco
+  const timeColor = timeRemaining <= 30 && isActive ? 'var(--red)' : 'var(--text-1)';
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--color-bg)' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
 
-      {/* ── Top bar ─────────────────────────────────────────── */}
-      <div
-        className="flex items-center justify-between px-4 py-3 border-b"
-        style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
-      >
-        {/* Tiempo restante */}
-        <div className="flex items-center gap-2 min-w-[4.5rem]">
-          <span
-            className="font-mono text-lg font-bold tabular-nums"
-            style={{
-              color: sessionState === SESSION_STATE.IDLE
-                ? 'var(--color-text-muted)'
-                : timeRemaining <= 30
-                  ? 'var(--color-error)'
-                  : 'var(--color-text-primary)',
-            }}
-          >
+      {/* Topbar */}
+      <div style={{
+        height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 24px', borderBottom: '1px solid var(--border)', background: 'var(--surface)',
+        flexShrink: 0,
+      }}>
+        {/* Tiempo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: '90px' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '20px', fontWeight: 700, color: timeColor, fontVariantNumeric: 'tabular-nums' }}>
             {mins}:{secs}
           </span>
           {sessionState === SESSION_STATE.PAUSED && (
-            <span
-              className="font-ui text-xs tracking-widest uppercase px-2 py-0.5 rounded-sm"
-              style={{ background: 'rgba(245,158,11,0.15)', color: 'var(--color-accent)' }}
-            >
+            <span style={{ fontSize: '10px', fontFamily: 'var(--font-ui)', fontWeight: 700, letterSpacing: '0.15em', color: 'var(--amber)', background: 'var(--amber-dim)', padding: '3px 8px', borderRadius: '2px' }}>
               PAUSA
             </span>
           )}
         </div>
 
         {/* Info central */}
-        <span
-          className="font-ui text-xs tracking-widest uppercase"
-          style={{ color: 'var(--color-text-muted)' }}
-        >
-          Koch L{settings.kochLevel} · {settings.speedValue} {settings.speedUnit.toUpperCase()}
-          {settings.charSpacing !== 1.0 && ` · ${settings.charSpacing.toFixed(1)}×`}
+        <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'var(--text-3)', letterSpacing: '0.08em' }}>
+          L{settings.kochLevel} · {settings.speedValue} {settings.speedUnit.toUpperCase()}
+          {settings.charSpacing !== 1.0 && ` · ${settings.charSpacing}×`}
         </span>
 
         {/* Controles */}
-        <div className="flex gap-2 min-w-[4.5rem] justify-end">
+        <div style={{ display: 'flex', gap: '4px', minWidth: '90px', justifyContent: 'flex-end' }}>
           {sessionState !== SESSION_STATE.IDLE ? (
             <>
-              <button className="btn-ghost text-xs" onClick={togglePause}>
+              <button className="btn btn-ghost" style={{ fontSize: '12px' }} onClick={togglePause}>
                 {sessionState === SESSION_STATE.PAUSED ? 'Resumir' : 'Pausa'}
               </button>
-              <button className="btn-ghost text-xs" onClick={() => { endSession(); onHome(); }}>
-                ✕
-              </button>
+              <button className="btn btn-ghost" style={{ fontSize: '12px' }} onClick={() => { endSession(); onHome(); }}>✕</button>
             </>
           ) : (
-            <button className="btn-ghost text-xs" onClick={onHome}>← Volver</button>
+            <button className="btn btn-ghost" style={{ fontSize: '12px' }} onClick={onHome}>← Volver</button>
           )}
         </div>
       </div>
 
-      {/* ── Área principal ──────────────────────────────────── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 gap-8">
+      {/* Área principal */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px', gap: '32px' }}>
 
-        {/* IDLE ─────────────────────────────────────────────── */}
+        {/* IDLE */}
         {sessionState === SESSION_STATE.IDLE && (
-          <div className="text-center space-y-6 w-full max-w-sm">
-            <div>
-              <h2
-                className="font-ui text-3xl font-bold tracking-widest uppercase"
-                style={{ color: 'var(--color-text-primary)' }}
-              >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', width: '100%', maxWidth: '440px' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.2em', color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '4px' }}>
                 Sesión Koch
-              </h2>
-              <p className="mt-2 font-ui text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                Nivel {settings.kochLevel} · {Math.floor(settings.exerciseDuration / 60)} minutos ·{' '}
-                {settings.speedValue} {settings.speedUnit.toUpperCase()}
-              </p>
+              </div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: '22px', fontWeight: 700, color: 'var(--text-1)' }}>
+                Nivel {settings.kochLevel}
+              </div>
             </div>
 
-            {/* Caracteres activos */}
-            <div
-              className="px-6 py-4 rounded-sm border"
-              style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
-            >
-              <p
-                className="font-ui text-xs tracking-widest uppercase mb-2"
-                style={{ color: 'var(--color-text-muted)' }}
-              >
+            {/* Chars */}
+            <div style={{ width: '100%', padding: '16px 20px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.2em', color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '10px' }}>
                 Caracteres activos
-              </p>
-              <p className="morse-text text-lg" style={{ color: 'var(--color-accent)', letterSpacing: '0.3em' }}>
-                {activeChars}
-              </p>
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '15px', fontWeight: 600, color: 'var(--amber)', letterSpacing: '0.25em', lineHeight: 1.8 }}>
+                {activeStr}
+              </div>
             </div>
 
-            <button className="btn-primary text-xl px-12 py-4 w-full" onClick={handleStart}>
+            <button className="btn btn-primary" style={{ width: '100%', padding: '16px', fontSize: '16px' }} onClick={handleStart}>
               EMPEZAR
             </button>
 
-            <p
-              className="font-ui text-xs tracking-widest uppercase"
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              Teclado · Enter confirma · Esc pausa
-            </p>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'var(--text-3)', textAlign: 'center' }}>
+              Letras y números directamente · Enter confirma · Esc pausa
+            </div>
           </div>
         )}
 
-        {/* COUNTDOWN ───────────────────────────────────────── */}
+        {/* COUNTDOWN */}
         {sessionState === SESSION_STATE.COUNTDOWN && (
-          <div className="text-center">
-            <div
-              className="morse-text"
-              style={{ fontSize: 'clamp(5rem, 20vw, 10rem)', color: 'var(--color-accent)', lineHeight: 1 }}
-            >
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'clamp(6rem,18vw,10rem)', fontWeight: 700, color: 'var(--amber)', lineHeight: 1 }}>
               {countdownSec}
             </div>
-            <p
-              className="font-ui text-sm tracking-widest uppercase mt-4"
-              style={{ color: 'var(--color-text-muted)' }}
-            >
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', color: 'var(--text-3)', marginTop: '16px', letterSpacing: '0.1em' }}>
               Preparate para escuchar...
-            </p>
+            </div>
           </div>
         )}
 
-        {/* PLAYING_AUDIO / WAITING_INPUT / FEEDBACK ─────────── */}
+        {/* PLAYING / WAITING / FEEDBACK */}
         {(sessionState === SESSION_STATE.PLAYING_AUDIO ||
           sessionState === SESSION_STATE.WAITING_INPUT ||
           sessionState === SESSION_STATE.FEEDBACK) && (
           <>
-            <AudioIndicator
-              sessionState={sessionState}
-              currentGroup={currentGroup}
-              groupPrint={settings.groupPrint}
-              inputTimeout={inputTimeout}
-            />
+            {/* Indicador de transmisión */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div
+                className={sessionState === SESSION_STATE.PLAYING_AUDIO ? 'transmit-dot' : ''}
+                style={{
+                  width: '8px', height: '8px', borderRadius: '50%',
+                  background: sessionState === SESSION_STATE.PLAYING_AUDIO
+                    ? 'var(--amber)'
+                    : sessionState === SESSION_STATE.WAITING_INPUT
+                      ? 'var(--text-3)'
+                      : 'var(--border-2)',
+                  transition: 'background 0.3s',
+                }}
+              />
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', letterSpacing: '0.1em', color: 'var(--text-3)', textTransform: 'uppercase' }}>
+                {sessionState === SESSION_STATE.PLAYING_AUDIO
+                  ? 'Transmitiendo'
+                  : sessionState === SESSION_STATE.WAITING_INPUT
+                    ? `Esperando · ${inputTimeout}s`
+                    : 'Resultado'}
+              </span>
+            </div>
 
             {/* Zona central */}
-            <div className="w-full max-w-lg text-center min-h-28 flex flex-col items-center justify-center">
+            <div style={{ width: '100%', maxWidth: '500px', minHeight: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               {sessionState === SESSION_STATE.FEEDBACK ? (
                 <GroupFeedback feedback={lastFeedback} fontSize={settings.fontSize} />
               ) : (
-                <>
-                  {/* Texto tipeado por el usuario */}
-                  <div
-                    className={`${sizeClass} morse-text`}
-                    style={{ color: 'var(--color-accent)', minHeight: '3rem', letterSpacing: '0.3em' }}
-                  >
-                    {inputText || (
-                      <span style={{ color: 'var(--color-text-muted)', opacity: 0.25 }}>_</span>
-                    )}
+                <div>
+                  {/* Texto del usuario */}
+                  <div className={fontSize} style={{ color: 'var(--amber)', letterSpacing: '0.3em', textAlign: 'center', minHeight: '2em' }}>
+                    {inputText || <span style={{ color: 'var(--text-3)', opacity: 0.3 }} className="cursor-blink">_</span>}
                   </div>
-
                   {sessionState === SESSION_STATE.WAITING_INPUT && (
-                    <p
-                      className="mt-3 font-ui text-xs tracking-widest uppercase slide-up"
-                      style={{ color: 'var(--color-text-muted)' }}
-                    >
+                    <div className="slide-up" style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'var(--text-3)', textAlign: 'center', marginTop: '12px' }}>
                       Tipea lo que escuchaste · Enter para confirmar
-                    </p>
+                    </div>
                   )}
-                </>
+                </div>
               )}
             </div>
 
             {/* Barra de timeout */}
             {sessionState === SESSION_STATE.WAITING_INPUT && (
-              <div
-                className="w-full max-w-sm h-0.5 rounded-full overflow-hidden"
-                style={{ background: 'var(--color-border)' }}
-              >
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width:      `${(inputTimeout / INPUT_TIMEOUT_SEC) * 100}%`,
-                    background: inputTimeout > 2 ? 'var(--color-accent)' : 'var(--color-error)',
-                    transition: 'width 1s linear, background 0.3s',
-                  }}
-                />
+              <div style={{ width: '100%', maxWidth: '320px', height: '2px', background: 'var(--border)', borderRadius: '1px', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%',
+                  width: `${(inputTimeout / INPUT_TIMEOUT_SEC) * 100}%`,
+                  background: inputTimeout > 2 ? 'var(--amber)' : 'var(--red)',
+                  transition: 'width 1s linear, background 0.3s',
+                }} />
               </div>
             )}
           </>
         )}
 
-        {/* PAUSED ──────────────────────────────────────────── */}
+        {/* PAUSED */}
         {sessionState === SESSION_STATE.PAUSED && (
-          <div className="text-center space-y-5">
-            <p
-              className="font-ui text-5xl"
-              style={{ color: 'var(--color-text-muted)', opacity: 0.3 }}
-            >
-              ⏸
-            </p>
-            <p
-              className="font-ui text-lg tracking-widest uppercase"
-              style={{ color: 'var(--color-text-secondary)' }}
-            >
-              Sesión pausada
-            </p>
-            <div className="flex gap-3 justify-center">
-              <button className="btn-primary" onClick={togglePause}>Resumir</button>
-              <button className="btn-secondary" onClick={() => { endSession(); onHome(); }}>Terminar</button>
+          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', letterSpacing: '0.2em', color: 'var(--text-3)', textTransform: 'uppercase' }}>
+              — PAUSA —
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button className="btn btn-primary" style={{ padding: '12px 32px' }} onClick={togglePause}>Resumir</button>
+              <button className="btn btn-secondary" onClick={() => { endSession(); onHome(); }}>Terminar</button>
             </div>
           </div>
         )}
       </div>
 
-      {/* ── Bottom stats ─────────────────────────────────────── */}
-      {sessionState !== SESSION_STATE.IDLE &&
-       sessionState !== SESSION_STATE.COUNTDOWN && (
-        <div
-          className="px-4 py-2.5 border-t flex items-center justify-center gap-6"
-          style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
-        >
-          <span className="font-ui text-xs tracking-widest uppercase" style={{ color: 'var(--color-text-muted)' }}>
-            {sessionResults.length} grupos
-          </span>
-          {sessionResults.length > 0 && (
-            <span className="font-ui text-xs tracking-widest uppercase" style={{ color: 'var(--color-accent)' }}>
-              {(sessionResults.reduce((s, r) => s + r.accuracy, 0) / sessionResults.length).toFixed(0)}% acc
+      {/* Bottom stats */}
+      {isActive && (
+        <div style={{
+          height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '28px',
+          borderTop: '1px solid var(--border)', background: 'var(--surface)', flexShrink: 0,
+        }}>
+          {[
+            { v: sessionResults.length, l: 'grupos' },
+            { v: sessionResults.length > 0 ? `${(sessionResults.reduce((s, r) => s + r.accuracy, 0) / sessionResults.length).toFixed(0)}%` : '—', l: 'acc', c: 'var(--amber)' },
+            { v: sessionResults.reduce((s, r) => s + r.totalChars, 0), l: 'chars' },
+          ].map(({ v, l, c }) => (
+            <span key={l} style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: c ?? 'var(--text-3)' }}>
+              {v} <span style={{ fontFamily: 'var(--font-ui)', fontSize: '11px', color: 'var(--text-3)' }}>{l}</span>
             </span>
-          )}
-          <span className="font-ui text-xs tracking-widest uppercase" style={{ color: 'var(--color-text-muted)' }}>
-            {sessionResults.reduce((s, r) => s + r.totalChars, 0)} chars
-          </span>
+          ))}
         </div>
       )}
     </div>
   );
 }
-
-// Exportar constante para uso interno
-const INPUT_TIMEOUT_SEC = 4;
