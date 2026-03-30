@@ -139,9 +139,9 @@ function OptionGrid({ options, value, onChange, columns = 3 }) {
               fontFamily: 'var(--font-ui)',
               fontSize: '13px',
               fontWeight: active ? 700 : 500,
-              border: `1px solid ${active ? 'var(--amber)' : 'var(--border-2)'}`,
+              border: `1px solid ${active ? 'var(--amber-text)' : 'var(--border-2)'}`,
               borderRadius: '2px',
-              background: active ? 'var(--amber)' : 'var(--surface-2)',
+              background: active ? 'var(--amber-dim)' : 'var(--surface-2)',
               color: active ? '#000' : 'var(--text-2)',
               cursor: 'pointer',
               transition: 'all 0.12s',
@@ -177,9 +177,9 @@ function Toggle({ options, value, onChange }) {
               fontWeight: 700,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              border: `1px solid ${active ? 'var(--amber)' : 'var(--border-2)'}`,
+              border: `1px solid ${active ? 'var(--amber-text)' : 'var(--border-2)'}`,
               borderRadius: '2px',
-              background: active ? 'var(--amber)' : 'var(--surface-2)',
+              background: active ? 'var(--amber-dim)' : 'var(--surface-2)',
               color: active ? '#000' : 'var(--text-3)',
               cursor: 'pointer',
               transition: 'all 0.12s',
@@ -552,8 +552,8 @@ export function SettingsScreen({ onClose }) {
                   >
                     <div style={{
                       width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
-                      background: active ? 'var(--amber)' : 'transparent',
-                      border: `1px solid ${active ? 'var(--amber)' : 'var(--border-2)'}`,
+                      background: active ? 'var(--amber-text)' : 'transparent',
+                      border: `1px solid ${active ? 'var(--amber-text)' : 'var(--border-2)'}`,
                     }} />
                     {opt.label}
                   </button>
@@ -859,8 +859,8 @@ export function SettingsScreen({ onClose }) {
                   >
                     <div style={{
                       width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
-                      background: active ? 'var(--amber)' : 'transparent',
-                      border: `1px solid ${active ? 'var(--amber)' : 'var(--border-2)'}`,
+                      background: active ? 'var(--amber-text)' : 'transparent',
+                      border: `1px solid ${active ? 'var(--amber-text)' : 'var(--border-2)'}`,
                     }} />
                     {opt.label}
                   </button>
@@ -897,8 +897,8 @@ export function SettingsScreen({ onClose }) {
                       >
                         <div style={{
                           width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
-                          background: active ? 'var(--amber)' : 'transparent',
-                          border: `1px solid ${active ? 'var(--amber)' : 'var(--border-2)'}`,
+                          background: active ? 'var(--amber-text)' : 'transparent',
+                          border: `1px solid ${active ? 'var(--amber-text)' : 'var(--border-2)'}`,
                         }} />
                         {opt.label}
                       </button>
