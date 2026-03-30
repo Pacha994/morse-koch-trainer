@@ -129,7 +129,7 @@ export function TrainingScreen({ onHome, onProgress }) {
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.2em', color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '10px' }}>
                 Caracteres activos
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '15px', fontWeight: 600, color: 'var(--amber)', letterSpacing: '0.25em', lineHeight: 1.8 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '15px', fontWeight: 600, color: 'var(--amber-text)', letterSpacing: '0.25em', lineHeight: 1.8 }}>
                 {activeStr}
               </div>
             </div>
@@ -147,7 +147,7 @@ export function TrainingScreen({ onHome, onProgress }) {
         {/* COUNTDOWN */}
         {sessionState === SESSION_STATE.COUNTDOWN && (
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'clamp(6rem,18vw,10rem)', fontWeight: 700, color: 'var(--amber)', lineHeight: 1 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'clamp(6rem,18vw,10rem)', fontWeight: 700, color: 'var(--amber-text)', lineHeight: 1 }}>
               {countdownSec}
             </div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', color: 'var(--text-3)', marginTop: '16px', letterSpacing: '0.1em' }}>
@@ -191,7 +191,7 @@ export function TrainingScreen({ onHome, onProgress }) {
               ) : (
                 <div>
                   {/* Texto del usuario */}
-                  <div className={fontSize} style={{ color: 'var(--amber)', letterSpacing: '0.3em', textAlign: 'center', minHeight: '2em' }}>
+                  <div className={fontSize} style={{ color: 'var(--amber-text)', letterSpacing: '0.3em', textAlign: 'center', minHeight: '2em' }}>
                     {inputText || <span style={{ color: 'var(--text-3)', opacity: 0.3 }} className="cursor-blink">_</span>}
                   </div>
                   {sessionState === SESSION_STATE.WAITING_INPUT && (

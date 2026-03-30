@@ -205,7 +205,7 @@ function SpeedSlider({ value, unit, onChange }) {
         <span style={{ fontSize: '13px', color: 'var(--text-3)', fontFamily: 'var(--font-ui)' }}>
           {min} {unit.toUpperCase()}
         </span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '22px', fontWeight: 700, color: 'var(--amber)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '22px', fontWeight: 700, color: 'var(--amber-text)' }}>
           {value} <span style={{ fontSize: '13px', fontWeight: 400 }}>{unit.toUpperCase()}</span>
         </span>
         <span style={{ fontSize: '13px', color: 'var(--text-3)', fontFamily: 'var(--font-ui)' }}>
@@ -376,7 +376,7 @@ function HardLettersEditor({ activeChars, hardLetters, onChange }) {
           background: 'var(--surface-2)',
           border: '1px solid var(--border-2)',
           borderRadius: '2px',
-          color: 'var(--amber)',
+          color: 'var(--amber-text)',
           outline: 'none',
           width: '100%',
         }}
@@ -406,7 +406,7 @@ function HardLettersEditor({ activeChars, hardLetters, onChange }) {
                 borderRadius: '2px',
                 border: `1px solid ${isHard ? 'var(--amber)' : 'var(--border)'}`,
                 background: isHard ? 'var(--amber-dim)' : 'var(--surface-2)',
-                color: isHard ? 'var(--amber)' : 'var(--text-3)',
+                color: isHard ? 'var(--amber-text)' : 'var(--text-3)',
                 cursor: 'pointer',
                 transition: 'all 0.1s',
               }}
@@ -542,7 +542,7 @@ export function SettingsScreen({ onClose }) {
                       border: `1px solid ${active ? 'var(--amber)' : 'var(--border)'}`,
                       borderRadius: '2px',
                       background: active ? 'var(--amber-dim)' : 'var(--surface)',
-                      color: active ? 'var(--amber)' : 'var(--text-2)',
+                      color: active ? 'var(--amber-text)' : 'var(--text-2)',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -777,7 +777,7 @@ export function SettingsScreen({ onClose }) {
                 fontFamily: 'var(--font-mono)',
                 fontSize: '15px',
                 fontWeight: 600,
-                color: 'var(--amber)',
+                color: 'var(--amber-text)',
                 minWidth: '42px',
                 textAlign: 'right',
               }}>
@@ -849,7 +849,7 @@ export function SettingsScreen({ onClose }) {
                       border: `1px solid ${active ? 'var(--amber)' : 'var(--border)'}`,
                       borderRadius: '2px',
                       background: active ? 'var(--amber-dim)' : 'var(--surface)',
-                      color: active ? 'var(--amber)' : 'var(--text-2)',
+                      color: active ? 'var(--amber-text)' : 'var(--text-2)',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -887,7 +887,7 @@ export function SettingsScreen({ onClose }) {
                           border: `1px solid ${active ? 'var(--amber)' : 'var(--border)'}`,
                           borderRadius: '2px',
                           background: active ? 'var(--amber-dim)' : 'var(--surface)',
-                          color: active ? 'var(--amber)' : 'var(--text-2)',
+                          color: active ? 'var(--amber-text)' : 'var(--text-2)',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',

@@ -42,7 +42,7 @@ const S = {
     fontFamily: 'var(--font-mono)',
     fontSize: '10px',
     fontWeight: 700,
-    color: 'var(--amber)',
+    color: 'var(--amber-text)',
     letterSpacing: '0.05em',
   },
   appName: {
@@ -118,7 +118,7 @@ const S = {
     fontFamily: 'var(--font-mono)',
     fontSize: '44px',
     fontWeight: 700,
-    color: 'var(--amber)',
+    color: 'var(--amber-text)',
     lineHeight: 1,
   },
   speedUnit: {
@@ -162,7 +162,7 @@ const S = {
     fontFamily: 'var(--font-mono)',
     fontSize: '14px',
     fontWeight: 700,
-    color: isHard ? 'var(--amber)' : 'var(--text-2)',
+    color: isHard ? 'var(--amber-text)' : 'var(--text-2)',
     lineHeight: 1,
   }),
   charCode: {
