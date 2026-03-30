@@ -142,7 +142,7 @@ function OptionGrid({ options, value, onChange, columns = 3 }) {
               border: `1px solid ${active ? 'var(--amber-text)' : 'var(--border-2)'}`,
               borderRadius: '2px',
               background: active ? 'var(--amber-dim)' : 'var(--surface-2)',
-              color: active ? '#000' : 'var(--text-2)',
+              color: active ? '#fff' : 'var(--text-2)',
               cursor: 'pointer',
               transition: 'all 0.12s',
               textAlign: 'center',
@@ -180,7 +180,7 @@ function Toggle({ options, value, onChange }) {
               border: `1px solid ${active ? 'var(--amber-text)' : 'var(--border-2)'}`,
               borderRadius: '2px',
               background: active ? 'var(--amber-dim)' : 'var(--surface-2)',
-              color: active ? '#000' : 'var(--text-3)',
+              color: active ? '#fff' : 'var(--text-3)',
               cursor: 'pointer',
               transition: 'all 0.12s',
             }}
