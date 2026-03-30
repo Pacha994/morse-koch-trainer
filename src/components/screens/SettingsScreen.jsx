@@ -135,16 +135,18 @@ function OptionGrid({ options, value, onChange, columns = 3 }) {
             key={opt.value}
             onClick={() => onChange(opt.value)}
             style={{
-              padding: '8px 4px',
-              fontFamily: 'var(--font-ui)',
+              padding: '10px 4px',
+              fontFamily: 'var(--font-mono)',
               fontSize: '13px',
-              fontWeight: active ? 700 : 500,
-              border: `1px solid ${active ? 'var(--amber-text)' : 'var(--border-2)'}`,
+              fontWeight: active ? 700 : 400,
+              // Activo: fondo azul sólido #1a6fc0, texto blanco (5.15:1 ✓ AA)
+              // Inactivo: fondo transparente, borde #787878 visible (4.17:1 vs bg ✓)
+              border: `1px solid ${active ? 'var(--amber)' : 'var(--border-2)'}`,
               borderRadius: '2px',
-              background: active ? 'var(--amber-dim)' : 'var(--surface-2)',
-              color: active ? '#fff' : 'var(--text-2)',
+              background: active ? 'var(--amber)' : 'transparent',
+              color: active ? '#ffffff' : 'var(--btn-inactive-text, #c8c8c8)',
               cursor: 'pointer',
-              transition: 'all 0.12s',
+              transition: 'background 0.1s, color 0.1s, border-color 0.1s',
               textAlign: 'center',
               lineHeight: 1.3,
             }}
@@ -171,18 +173,18 @@ function Toggle({ options, value, onChange }) {
             onClick={() => onChange(opt.value)}
             style={{
               flex: 1,
-              padding: '9px 0',
-              fontFamily: 'var(--font-ui)',
+              padding: '11px 0',
+              fontFamily: 'var(--font-mono)',
               fontSize: '14px',
               fontWeight: 700,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              border: `1px solid ${active ? 'var(--amber-text)' : 'var(--border-2)'}`,
+              border: `1px solid ${active ? 'var(--amber)' : 'var(--border-2)'}`,
               borderRadius: '2px',
-              background: active ? 'var(--amber-dim)' : 'var(--surface-2)',
-              color: active ? '#fff' : 'var(--text-3)',
+              background: active ? 'var(--amber)' : 'transparent',
+              color: active ? '#ffffff' : 'var(--btn-inactive-text, #c8c8c8)',
               cursor: 'pointer',
-              transition: 'all 0.12s',
+              transition: 'background 0.1s, color 0.1s, border-color 0.1s',
             }}
           >
             {opt.label}
@@ -257,7 +259,7 @@ function KochLevelSelector({ sequence, level, onChange }) {
               gap: '12px',
               padding: '9px 14px',
               background: isSelected
-                ? 'var(--amber-dim)'
+                ? 'var(--amber)'
                 : isActive
                   ? 'var(--surface)'
                   : 'var(--bg)',
@@ -405,8 +407,8 @@ function HardLettersEditor({ activeChars, hardLetters, onChange }) {
                 justifyContent: 'center',
                 borderRadius: '2px',
                 border: `1px solid ${isHard ? 'var(--amber)' : 'var(--border)'}`,
-                background: isHard ? 'var(--amber-dim)' : 'var(--surface-2)',
-                color: isHard ? 'var(--amber-text)' : 'var(--text-3)',
+                background: isHard ? 'var(--amber)' : 'var(--surface-2)',
+                color: isHard ? '#ffffff' : 'var(--btn-inactive-text, #c8c8c8)',
                 cursor: 'pointer',
                 transition: 'all 0.1s',
               }}
@@ -541,8 +543,8 @@ export function SettingsScreen({ onClose }) {
                       fontSize: '14px',
                       border: `1px solid ${active ? 'var(--amber)' : 'var(--border)'}`,
                       borderRadius: '2px',
-                      background: active ? 'var(--amber-dim)' : 'var(--surface)',
-                      color: active ? 'var(--amber-text)' : 'var(--text-2)',
+                      background: active ? 'var(--amber)' : 'transparent',
+                      color: active ? '#ffffff' : 'var(--btn-inactive-text, #c8c8c8)',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -553,7 +555,7 @@ export function SettingsScreen({ onClose }) {
                     <div style={{
                       width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
                       background: active ? 'var(--amber-text)' : 'transparent',
-                      border: `1px solid ${active ? 'var(--amber-text)' : 'var(--border-2)'}`,
+                      border: `1px solid ${active ? 'var(--amber)' : 'var(--border-2)'}`,
                     }} />
                     {opt.label}
                   </button>
@@ -848,8 +850,8 @@ export function SettingsScreen({ onClose }) {
                       fontSize: '14px',
                       border: `1px solid ${active ? 'var(--amber)' : 'var(--border)'}`,
                       borderRadius: '2px',
-                      background: active ? 'var(--amber-dim)' : 'var(--surface)',
-                      color: active ? 'var(--amber-text)' : 'var(--text-2)',
+                      background: active ? 'var(--amber)' : 'transparent',
+                      color: active ? '#ffffff' : 'var(--btn-inactive-text, #c8c8c8)',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -860,7 +862,7 @@ export function SettingsScreen({ onClose }) {
                     <div style={{
                       width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
                       background: active ? 'var(--amber-text)' : 'transparent',
-                      border: `1px solid ${active ? 'var(--amber-text)' : 'var(--border-2)'}`,
+                      border: `1px solid ${active ? 'var(--amber)' : 'var(--border-2)'}`,
                     }} />
                     {opt.label}
                   </button>
@@ -886,8 +888,8 @@ export function SettingsScreen({ onClose }) {
                           fontSize: '14px',
                           border: `1px solid ${active ? 'var(--amber)' : 'var(--border)'}`,
                           borderRadius: '2px',
-                          background: active ? 'var(--amber-dim)' : 'var(--surface)',
-                          color: active ? 'var(--amber-text)' : 'var(--text-2)',
+                          background: active ? 'var(--amber)' : 'transparent',
+                          color: active ? '#ffffff' : 'var(--btn-inactive-text, #c8c8c8)',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
@@ -898,7 +900,7 @@ export function SettingsScreen({ onClose }) {
                         <div style={{
                           width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
                           background: active ? 'var(--amber-text)' : 'transparent',
-                          border: `1px solid ${active ? 'var(--amber-text)' : 'var(--border-2)'}`,
+                          border: `1px solid ${active ? 'var(--amber)' : 'var(--border-2)'}`,
                         }} />
                         {opt.label}
                       </button>
