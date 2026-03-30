@@ -49,7 +49,7 @@ function CharHeatmap({ characterStats }) {
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
       {sorted.map(({ char, acc, total }) => {
         const c = acc >= 90 ? 'var(--green)' : acc >= 70 ? 'var(--amber)' : 'var(--red)';
-        const bg = acc >= 90 ? 'rgba(34,197,94,0.1)' : acc >= 70 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)';
+        const bg = acc >= 90 ? 'rgba(34,197,94,0.1)' : acc >= 70 ? 'rgba(3,58,112,0.15)' : 'rgba(239,68,68,0.1)';
         return (
           <div key={char} title={`${char}: ${acc.toFixed(0)}% (${total} veces)`}
             style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 8px', border: `1px solid ${c}33`, background: bg, borderRadius: '2px', minWidth: '40px', gap: '2px' }}>

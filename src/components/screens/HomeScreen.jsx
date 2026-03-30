@@ -153,7 +153,7 @@ const S = {
     flexDirection: 'column',
     alignItems: 'center',
     padding: '5px 8px',
-    border: `1px solid ${isHard ? 'rgba(245,158,11,0.4)' : 'var(--border)'}`,
+    border: `1px solid ${isHard ? 'rgba(3,58,112,0.4)' : 'var(--border)'}`,
     background: isHard ? 'var(--amber-dim)' : 'var(--surface-2)',
     borderRadius: '2px',
     gap: '2px',

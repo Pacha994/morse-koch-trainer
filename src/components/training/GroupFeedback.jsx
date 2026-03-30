@@ -13,7 +13,7 @@ export function GroupFeedback({ feedback, fontSize = 'medium' }) {
   const badgeColor = result.accuracy === 100
     ? { bg: 'rgba(34,197,94,0.12)', border: 'rgba(34,197,94,0.3)', text: 'var(--green)' }
     : result.accuracy >= 80
-      ? { bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)', text: 'var(--amber)' }
+      ? { bg: 'rgba(3,58,112,0.15)', border: 'rgba(3,58,112,0.35)', text: 'var(--amber)' }
       : { bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', text: 'var(--red)' };
 
   return (
