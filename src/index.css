@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /*
@@ -32,7 +32,7 @@
   --red:         #ef4444;
 
   --font-mono: 'JetBrains Mono', 'Courier New', monospace;
-  --font-ui:   'Syne', system-ui, sans-serif;
+  --font-ui:   'JetBrains Mono', 'Courier New', monospace;
 
   /* Tipografía de datos Morse */
   --morse-xl: clamp(3rem,   8vw, 6rem);
