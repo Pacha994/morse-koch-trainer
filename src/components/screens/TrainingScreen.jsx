@@ -98,13 +98,13 @@ export function TrainingScreen({ onHome, onProgress }) {
         <div style={{ display: 'flex', gap: '4px', minWidth: '90px', justifyContent: 'flex-end' }}>
           {sessionState !== SESSION_STATE.IDLE ? (
             <>
-              <button className="btn btn-ghost" style={{ fontSize: '12px' }} onClick={togglePause}>
+              <button className="btn btn-ghost" onClick={togglePause}>
                 {sessionState === SESSION_STATE.PAUSED ? 'Resumir' : 'Pausa'}
               </button>
-              <button className="btn btn-ghost" style={{ fontSize: '12px' }} onClick={() => { endSession(); onHome(); }}>✕</button>
+              <button className="btn btn-ghost" onClick={() => { endSession(); onHome(); }}>✕</button>
             </>
           ) : (
-            <button className="btn btn-ghost" style={{ fontSize: '12px' }} onClick={onHome}>← Volver</button>
+            <button className="btn btn-ghost" onClick={onHome}>← Volver</button>
           )}
         </div>
       </div>

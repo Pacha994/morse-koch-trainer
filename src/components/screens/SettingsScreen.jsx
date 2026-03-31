@@ -510,8 +510,7 @@ export function SettingsScreen({ onClose }) {
         </span>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
-            className="btn-ghost"
-            style={{ fontSize: '13px' }}
+            className="btn btn-ghost"
             onClick={() => { if (confirm('¿Restaurar todos los valores por defecto?')) resetToDefaults(); }}
           >
             Resetear
