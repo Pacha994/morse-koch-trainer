@@ -40,7 +40,7 @@ export function TrainingScreen({ onHome, onProgress }) {
     enabled: inputEnabled, onConfirm: confirmInput, onPause: togglePause, onRepeat: () => {},
   });
   useEffect(() => { if (inputEnabled) setInputText(kbText); }, [kbText, inputEnabled, setInputText]);
-  useEffect(() => { clearInput(); }, [currentGroup]);
+  useEffect(() => { clearInput(); }, [currentGroup, clearInput]);
 
   // Cancelar el deletreo fonético cuando empieza a sonar el siguiente grupo
   useEffect(() => {

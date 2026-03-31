@@ -180,19 +180,12 @@ export function useTrainingSession({ settings, playGroup, stopAudio }) {
 
   }, [getNextGroup, playGroup, submitResponse]);
 
-  // ── startSession ──────────────────────────────────────────────
-  const startSession = useCallback(() => {
-    clearAllTimers();
-    isPlayingGroupRef.current = false;
-    setSessionResults([]);
-    setLastFeedback(null);
-    setInputText('');
-    inputTextRef.current = '';
-
-    const duration = settingsRef.current.exerciseDuration;
-    setTimeRemaining(duration);
-
-    // Timer de duración total de la sesión
+  // ── startSessionTimer ────────────────────────────────────────
+  // Inicia el countdown de duración de sesión.
+  // Separado de startSession para que pueda llamarse DESPUÉS del COUNTDOWN
+  // (fix #4: el timer no debe correr mientras se muestra la cuenta regresiva).
+  const startSessionTimer = useCallback(() => {
+    if (sessionTimerRef.current) return; // ya corriendo (guard)
     sessionTimerRef.current = setInterval(() => {
       setTimeRemaining(prev => {
         if (prev <= 1) {
@@ -207,8 +200,22 @@ export function useTrainingSession({ settings, playGroup, stopAudio }) {
         return prev - 1;
       });
     }, 1000);
+  }, [stopAudio, clearAllTimers]);
 
-    // Cuenta regresiva inicial (startPause)
+  // ── startSession ──────────────────────────────────────────────
+  const startSession = useCallback(() => {
+    clearAllTimers();
+    isPlayingGroupRef.current = false;
+    setSessionResults([]);
+    setLastFeedback(null);
+    setInputText('');
+    inputTextRef.current = '';
+
+    const duration = settingsRef.current.exerciseDuration;
+    setTimeRemaining(duration);
+
+    // Cuenta regresiva inicial (startPause).
+    // El timer de sesión NO arranca hasta que el countdown termina (#4).
     const startPause = settingsRef.current.startPause || 0;
 
     if (startPause > 0) {
@@ -223,30 +230,45 @@ export function useTrainingSession({ settings, playGroup, stopAudio }) {
         if (remaining <= 0) {
           clearInterval(countdownTimerRef.current);
           countdownTimerRef.current = null;
+          // Arrancar el timer de sesión AQUÍ, después del countdown
+          startSessionTimer();
           playNextGroupInternal();
         }
       }, 1000);
     } else {
+      // Sin countdown: el timer empieza junto con el primer grupo
+      startSessionTimer();
       playNextGroupInternal();
     }
-  }, [clearAllTimers, stopAudio, playNextGroupInternal]);
+  }, [clearAllTimers, stopAudio, playNextGroupInternal, startSessionTimer]);
 
   // ── togglePause ───────────────────────────────────────────────
   const togglePause = useCallback(() => {
     if (sessionStateRef.current === SESSION_STATE.PAUSED) {
-      // Reanudar: reproducir el grupo actual nuevamente
+      // Reanudar: reiniciar el timer de sesión desde el tiempo restante actual (#5)
+      // y reproducir el grupo actual nuevamente.
+      startSessionTimer();
       isPlayingGroupRef.current = false;
       playNextGroupInternal();
     } else {
-      // Pausar: detener audio y timers de grupo
+      // Pausar: detener audio, congelar el timer de sesión (#5) y limpiar
+      // los timers de grupo.
       stopAudio();
       isPlayingGroupRef.current = false;
-      if (inputTimerRef.current)  { clearInterval(inputTimerRef.current);  inputTimerRef.current = null; }
+
+      // Detener el timer de sesión para que el tiempo no corra en pausa (#5)
+      if (sessionTimerRef.current) {
+        clearInterval(sessionTimerRef.current);
+        sessionTimerRef.current = null;
+      }
+
+      if (inputTimerRef.current)    { clearInterval(inputTimerRef.current);  inputTimerRef.current = null; }
       if (feedbackTimerRef.current) { clearTimeout(feedbackTimerRef.current); feedbackTimerRef.current = null; }
+
       setSessionState(SESSION_STATE.PAUSED);
       sessionStateRef.current = SESSION_STATE.PAUSED;
     }
-  }, [stopAudio, playNextGroupInternal]);
+  }, [stopAudio, playNextGroupInternal, startSessionTimer]);
 
   // ── endSession ────────────────────────────────────────────────
   const endSession = useCallback(() => {

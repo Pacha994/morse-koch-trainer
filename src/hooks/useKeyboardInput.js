@@ -20,7 +20,7 @@
  * ─────────────────────────────────────────────────────────────────
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 // Caracteres válidos que el usuario puede tipear como respuesta
 const VALID_INPUT_CHARS = new Set(
@@ -45,7 +45,15 @@ const VALID_INPUT_CHARS = new Set(
 export function useKeyboardInput({ enabled = true, onConfirm, onPause, onRepeat }) {
   const [inputText, setInputText] = useState('');
 
-  const clearInput = useCallback(() => setInputText(''), []);
+  // Ref paralela para leer el valor actual desde dentro de los event listeners
+  // sin stale closure (el listener no se recrea cuando inputText cambia).
+  const inputTextRef = useRef('');
+  useEffect(() => { inputTextRef.current = inputText; }, [inputText]);
+
+  const clearInput = useCallback(() => {
+    setInputText('');
+    inputTextRef.current = '';
+  }, []);
 
   useEffect(() => {
     if (!enabled) return;
@@ -85,15 +93,17 @@ export function useKeyboardInput({ enabled = true, onConfirm, onPause, onRepeat 
       }
 
       // ── Repetir grupo ────────────────────────────────────────
+      // Convención IZ2UUF: R dispara "repetir" SOLO si el input está vacío.
+      // Si el usuario ya empezó a tipear, R se agrega al input normalmente.
+      // Usamos inputTextRef para evitar stale closure — el listener no se
+      // recrea cuando inputText cambia, así que no podemos leer el estado
+      // directamente desde aquí.
       if (key === 'r' || key === 'R') {
-        // Solo disparar si el input está vacío (si el usuario está tipeando 'R' como respuesta, no disparar)
-        // Decidimos: si el campo de input está vacío, R = repetir; si no, R = agregar al input
-        // Esta es la convención de IZ2UUF
-        onRepeat?.();
-        // NO retornamos: la R también puede ser parte de la respuesta
-        // Pero primero dejamos que el sistema decida si reproducir el grupo
-        // No agregamos la R al input cuando se usa como shortcut de repetir
-        return;
+        if (inputTextRef.current === '') {
+          onRepeat?.();
+          return; // R como shortcut: no agregar al input
+        }
+        // Si hay texto, R cae al handler normal de abajo (se agrega al input)
       }
 
       // ── Input de respuesta ───────────────────────────────────

@@ -126,10 +126,20 @@ export class MorsePlayer {
     const gain = ctx.createGain();
 
     // Aplicar el envelope: silencio → attack → sustain → release → silencio
+    //
+    // Guard: a velocidades muy altas (≥40 WPM con attack/release largos) el
+    // sustain start puede caer ANTES de que termine el attack, produciendo
+    // setValueAtTime fuera de orden → artefactos de audio.
+    // Solución: el sustain start nunca puede ser anterior al fin del attack.
+    const sustainStart = Math.max(
+      startTime + attackSec,
+      startTime + durationSec - releaseSec
+    );
+
     gain.gain.setValueAtTime(0, startTime);
     gain.gain.linearRampToValueAtTime(volume, startTime + attackSec);
-    // Mantener el volumen en el sustain
-    gain.gain.setValueAtTime(volume, startTime + durationSec - releaseSec);
+    // Mantener el volumen en el sustain (puede coincidir con el fin del attack)
+    gain.gain.setValueAtTime(volume, sustainStart);
     // Fade out al final
     gain.gain.linearRampToValueAtTime(0, startTime + durationSec);
 

@@ -67,7 +67,7 @@ export function ProgressScreen({ onClose }) {
   const recentSessions = getRecentSessions(20);
   const recentAccuracy = getRecentAccuracy(5);
   const allSessions    = [...progress.sessionHistory];
-  const maxKoch = allSessions.length > 0 ? Math.max(...allSessions.map(s => s.kochLevel)) : 0;
+  const maxKoch = allSessions.length > 0 ? Math.max(...allSessions.map(s => s.kochLevel ?? 0)) : 0;
 
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>

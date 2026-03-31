@@ -420,7 +420,7 @@ export function HomeScreen({ onStartTraining, onOpenSettings, onOpenProgress }) 
             {[
               { label: 'Sesiones',  value: progress.totalSessions },
               { label: 'Tiempo',    value: formattedTotalTime || '0m' },
-              { label: 'Koch max',  value: `L${Math.max(...progress.sessionHistory.map(s => s.kochLevel))}` },
+              { label: 'Koch max',  value: `L${Math.max(...progress.sessionHistory.map(s => s.kochLevel ?? 0))}` },
             ].map(({ label, value }) => (
               <div key={label} style={S.globalStat}>
                 <div style={S.globalValue}>{value}</div>
