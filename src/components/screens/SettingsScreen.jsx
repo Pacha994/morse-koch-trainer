@@ -843,6 +843,48 @@ export function SettingsScreen({ onClose }) {
         {/* ══ 8. VOZ (TTS) ═══════════════════════════════════════ */}
         <Section title="Voz / Text-to-Speech">
 
+          {/* Toggle: deletreo fonético ITU al mostrar resultado */}
+          <Field label="Deletreo fonético ITU">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
+              <div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', color: 'var(--text-2)', marginBottom: '2px' }}>
+                  Leer resultado en voz
+                </div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: '11px', color: 'var(--text-3)' }}>
+                  "KMMKM" → Kilo. Mike. Mike. Kilo. Mike.
+                </div>
+              </div>
+              <button
+                onClick={() => updateSetting('phoneticReadout', !settings.phoneticReadout)}
+                style={{
+                  flexShrink: 0,
+                  marginLeft: '16px',
+                  width: '44px',
+                  height: '24px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: settings.phoneticReadout ? 'var(--green)' : 'var(--border-2)',
+                  position: 'relative',
+                  transition: 'background 0.2s',
+                }}
+                aria-label="Toggle deletreo fonético"
+              >
+                <span style={{
+                  position: 'absolute',
+                  top: '3px',
+                  left: settings.phoneticReadout ? '23px' : '3px',
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  background: 'white',
+                  transition: 'left 0.2s',
+                  display: 'block',
+                }} />
+              </button>
+            </div>
+          </Field>
+
           <Field label="Modo de voz">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {SPEECH_MODES.map(opt => {

@@ -229,6 +229,9 @@ export const DEFAULT_SETTINGS = {
   timeBeforeSpeech: 2.0,   // segundos — de SPEECH_TIMING_OPTIONS
   timeAfterSpeech: 1.0,    // segundos — de SPEECH_TIMING_OPTIONS
 
+  // Deletreo fonético ITU al mostrar resultado (Kilo, Mike, Alpha…)
+  phoneticReadout: true,
+
   // Cadena personalizada (para modos custom_string / words_*)
   customString: '',
 
