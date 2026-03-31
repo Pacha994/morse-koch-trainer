@@ -4,6 +4,14 @@
  * - Layout: label centrado arriba, letras grandes centradas debajo.
  * - Deletreo fonético ITU automático via Web Speech API (si phoneticReadout=true).
  *   Lee el grupo COMPLETO: "KMMKM" → "Kilo. Mike. Mike. Kilo. Mike."
+ *
+ * ── Bug de Chrome con Web Audio API ──────────────────────────────────────────
+ * Chrome tiene un bug conocido donde speechSynthesis.speak() se pausa
+ * silenciosamente (~1s) cuando la página también usa Web Audio API (como
+ * nosotros con el oscillador Morse). El workaround es un setInterval que
+ * llama a speechSynthesis.pause() + resume() cada ~250ms mientras la
+ * utterance esté activa — esto "ticklea" al sintetizador y evita que se congele.
+ * Referencias: https://bugs.chromium.org/p/chromium/issues/detail?id=679437
  */
 import React, { useEffect, useRef } from 'react';
 import { ITU_PHONETIC } from '../../constants/ituPhonetic.js';
@@ -11,7 +19,7 @@ import { useSettings }  from '../../context/SettingsContext.jsx';
 
 /**
  * Convierte un string a fonético ITU separado por pausas.
- * "KM" → "Kilo. Mike."  (con punto final para una pausa natural al terminar)
+ * "KM" → "Kilo. Mike."  (con punto final para pausa natural al terminar)
  */
 function toPhoneticSpeech(text) {
   return text
@@ -19,6 +27,28 @@ function toPhoneticSpeech(text) {
     .split('')
     .map(ch => ITU_PHONETIC[ch] ?? ch)
     .join('. ') + '.';
+}
+
+/**
+ * Workaround para el bug de Chrome que corta speechSynthesis cuando
+ * la página usa Web Audio API simultáneamente.
+ *
+ * Inicia un interval que pausa+resume el sintetizador cada 250ms
+ * mientras la utterance esté activa. Retorna una función de cleanup.
+ */
+function startSpeechKeepAlive() {
+  const synth = window.speechSynthesis;
+  // El intervalo "ticklea" al sintetizador para que no se congele
+  const intervalId = setInterval(() => {
+    if (!synth.speaking) {
+      clearInterval(intervalId);
+      return;
+    }
+    synth.pause();
+    synth.resume();
+  }, 250);
+
+  return () => clearInterval(intervalId);
 }
 
 export function GroupFeedback({ feedback, fontSize = 'medium' }) {
@@ -40,17 +70,19 @@ export function GroupFeedback({ feedback, fontSize = 'medium' }) {
         : { bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)',  text: 'var(--red)'   };
 
   // ── Deletreo fonético ─────────────────────────────────────────────────────
-  // spokenRef evita re-lectura si el componente re-renderiza con el mismo grupo.
-  // La utteranceRef retiene la referencia para que el GC no destruya el objeto
-  // antes de que Chrome termine de hablar (bug conocido en Chrome/Android).
-  const spokenRef    = useRef(null);
-  const utteranceRef = useRef(null);
-  const timerRef     = useRef(null);
+  const spokenRef      = useRef(null); // evita re-lectura si mismo grupo
+  const utteranceRef   = useRef(null); // retiene objeto para prevenir GC prematuro
+  const timerRef       = useRef(null); // timeout del delay inicial
+  const keepAliveRef   = useRef(null); // cleanup del workaround de Chrome
 
   useEffect(() => {
-    // Cancelar TTS anterior al desmontar o al cambiar de grupo
+    // Cleanup al desmontar o al cambiar de grupo: cancelar todo
     return () => {
       clearTimeout(timerRef.current);
+      if (keepAliveRef.current) {
+        keepAliveRef.current(); // detener el interval del workaround
+        keepAliveRef.current = null;
+      }
       if (window.speechSynthesis) window.speechSynthesis.cancel();
     };
   }, [sentUp]);
@@ -63,8 +95,12 @@ export function GroupFeedback({ feedback, fontSize = 'medium' }) {
     if (spokenRef.current === sentUp) return;
     spokenRef.current = sentUp;
 
-    // Cancelar cualquier utterance en curso
+    // Cancelar cualquier utterance en curso y limpiar keep-alive anterior
     window.speechSynthesis.cancel();
+    if (keepAliveRef.current) {
+      keepAliveRef.current();
+      keepAliveRef.current = null;
+    }
 
     const utterance = new SpeechSynthesisUtterance(toPhoneticSpeech(sentUp));
     utterance.lang   = 'en-US'; // pronunciación correcta de nombres ITU
@@ -72,12 +108,22 @@ export function GroupFeedback({ feedback, fontSize = 'medium' }) {
     utterance.pitch  = 1.0;
     utterance.volume = 1.0;
 
+    // Al terminar, limpiar el keep-alive
+    utterance.onend = () => {
+      if (keepAliveRef.current) {
+        keepAliveRef.current();
+        keepAliveRef.current = null;
+      }
+    };
+
     // Guardamos en ref para que el GC no destruya el objeto prematuramente
     utteranceRef.current = utterance;
 
     // Pequeño delay para separar el audio Morse del TTS
     timerRef.current = setTimeout(() => {
       window.speechSynthesis.speak(utteranceRef.current);
+      // Iniciar el workaround anti-freeze de Chrome inmediatamente después
+      keepAliveRef.current = startSpeechKeepAlive();
     }, 350);
   }, [sentUp, settings.phoneticReadout]);
 
