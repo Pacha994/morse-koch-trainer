@@ -129,7 +129,7 @@ export function ProgressScreen({ onClose }) {
                       <div>
                         <span style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', color: 'var(--text-2)' }}>Koch L{s.kochLevel}</span>
                         <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'var(--text-3)', marginLeft: '10px' }}>{s.speedValue} {s.speedUnit.toUpperCase()}</span>
-                        {s.durationSeconds && <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'var(--text-3)', marginLeft: '6px' }}>· {Math.floor(s.durationSeconds / 60)}m</span>}
+                        {s.durationSeconds > 0 && <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'var(--text-3)', marginLeft: '6px' }}>· {Math.floor(s.durationSeconds / 60)}m</span>}
                       </div>
                     </div>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-3)' }}>
