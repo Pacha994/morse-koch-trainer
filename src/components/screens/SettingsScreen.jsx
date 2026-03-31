@@ -500,18 +500,13 @@ export function SettingsScreen({ onClose }) {
         background: 'var(--surface)',
         flexShrink: 0,
       }}>
-        {/* Logo + nombre app (igual que HomeScreen) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, borderRadius: '50%', overflow: 'hidden' }}>
-            <img src="/logo-rcc.png" alt="Radio Club Córdoba" style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+        {/* Solo título — sin logo en pantallas secundarias */}
+        <div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-1)', lineHeight: 1 }}>
+            Configuración
           </div>
-          <div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-1)', lineHeight: 1 }}>
-              Configuración
-            </div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: '11px', color: 'var(--text-3)', letterSpacing: '0.06em' }}>
-              LU4HH - Radio Club Córdoba
-            </div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: '11px', color: 'var(--text-3)', letterSpacing: '0.06em' }}>
+            LU4HH - Radio Club Córdoba
           </div>
         </div>
         {/* Acciones */}

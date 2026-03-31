@@ -317,7 +317,7 @@ export function HomeScreen({ onStartTraining, onOpenSettings, onOpenProgress }) 
         inset: 0,
         pointerEvents: 'none',
         zIndex: 0,
-        backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)',
+        backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.10) 1px, transparent 1px)',
         backgroundSize: '28px 28px',
         maskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)',
         WebkitMaskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)',
