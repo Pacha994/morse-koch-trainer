@@ -93,60 +93,55 @@ export function GroupFeedback({ feedback, fontSize = 'medium' }) {
         {result.accuracy === 100 ? '✓ PERFECTO' : `${result.accuracy.toFixed(0)}%`}
       </div>
 
-      {/* ── Comparación: ENV y TU completamente centradas ─────────── */}
-      {/*
-        Layout: dos filas, cada una con [LABEL] [CHARS].
-        Para que las letras queden alineadas entre sí, ponemos ambas
-        filas en un contenedor con display:grid de 2 columnas,
-        donde la columna de label tiene ancho fijo y las letras
-        van en la segunda columna centradas.
-        El contenedor completo está centrado con margin: auto.
-      */}
+      {/* ── Comparación: label encima, letras centradas ─────────── */}
       <div style={{
-        display: 'inline-grid',
-        gridTemplateColumns: 'auto 1fr',
-        rowGap: '8px',
-        columnGap: '12px',
+        display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
+        gap: '20px',
+        width: '100%',
       }}>
         {/* Fila ENV */}
-        <span style={{
-          fontFamily: 'var(--font-ui)',
-          fontSize: '10px',
-          fontWeight: 700,
-          letterSpacing: '0.18em',
-          color: 'var(--text-3)',
-          textTransform: 'uppercase',
-          textAlign: 'right',
-          whiteSpace: 'nowrap',
-        }}>
-          ENV
-        </span>
-        <div className={sizeClass} style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          {sentUp.split('').map((char, i) => (
-            <span key={i} className={result.details[i]?.isCorrect ? 'char-ok' : 'char-err'}>{char}</span>
-          ))}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+          <span style={{
+            fontFamily: 'var(--font-ui)',
+            fontSize: '10px',
+            fontWeight: 700,
+            letterSpacing: '0.22em',
+            color: 'var(--text-3)',
+            textTransform: 'uppercase',
+          }}>
+            ENVIADO
+          </span>
+          <div className={sizeClass} style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            {sentUp.split('').map((char, i) => (
+              <span key={i} className={result.details[i]?.isCorrect ? 'char-ok' : 'char-err'}>{char}</span>
+            ))}
+          </div>
         </div>
 
+        {/* Separador sutil */}
+        <div style={{ width: '40px', height: '1px', background: 'var(--border)' }} />
+
         {/* Fila TU */}
-        <span style={{
-          fontFamily: 'var(--font-ui)',
-          fontSize: '10px',
-          fontWeight: 700,
-          letterSpacing: '0.18em',
-          color: 'var(--text-3)',
-          textTransform: 'uppercase',
-          textAlign: 'right',
-          whiteSpace: 'nowrap',
-        }}>
-          TU
-        </span>
-        <div className={sizeClass} style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          {sentUp.split('').map((_, i) => {
-            const d = result.details[i];
-            if (!d?.receivedChar) return <span key={i} className="char-miss">_</span>;
-            return <span key={i} className={d.isCorrect ? 'char-ok' : 'char-err'}>{d.receivedChar}</span>;
-          })}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+          <span style={{
+            fontFamily: 'var(--font-ui)',
+            fontSize: '10px',
+            fontWeight: 700,
+            letterSpacing: '0.22em',
+            color: 'var(--text-3)',
+            textTransform: 'uppercase',
+          }}>
+            TU RESPUESTA
+          </span>
+          <div className={sizeClass} style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            {sentUp.split('').map((_, i) => {
+              const d = result.details[i];
+              if (!d?.receivedChar) return <span key={i} className="char-miss">_</span>;
+              return <span key={i} className={d.isCorrect ? 'char-ok' : 'char-err'}>{d.receivedChar}</span>;
+            })}
+          </div>
         </div>
       </div>
 
