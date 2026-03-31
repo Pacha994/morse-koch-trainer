@@ -42,6 +42,13 @@ export function TrainingScreen({ onHome, onProgress }) {
   useEffect(() => { if (inputEnabled) setInputText(kbText); }, [kbText, inputEnabled, setInputText]);
   useEffect(() => { clearInput(); }, [currentGroup]);
 
+  // Cancelar el deletreo fonético cuando empieza a sonar el siguiente grupo
+  useEffect(() => {
+    if (sessionState === SESSION_STATE.PLAYING_AUDIO && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  }, [sessionState, currentGroup]);
+
   const handleStart = () => { initAudio(); sessionStartTime.current = null; startSession(); };
 
   if (sessionState === SESSION_STATE.FINISHED && sessionStats) {

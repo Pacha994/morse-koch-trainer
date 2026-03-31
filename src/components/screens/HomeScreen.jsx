@@ -15,6 +15,7 @@ const S = {
     background: 'var(--bg)',
     display: 'flex',
     flexDirection: 'column',
+    position: 'relative',
   },
 
   // Header horizontal: logo + navegación
@@ -40,11 +41,15 @@ const S = {
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+    background: 'transparent',
+    borderRadius: '50%',
+    overflow: 'hidden',
   },
   logoImg: {
     width: '36px',
     height: '36px',
-    objectFit: 'contain',
+    objectFit: 'cover',
+    display: 'block',
   },
   appName: {
     fontFamily: 'var(--font-ui)',
@@ -306,25 +311,37 @@ export function HomeScreen({ onStartTraining, onOpenSettings, onOpenProgress }) 
   return (
     <div style={S.root}>
 
+      {/* Dot pattern de fondo — muy sutil */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+        zIndex: 0,
+        backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)',
+        backgroundSize: '28px 28px',
+        maskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)',
+        WebkitMaskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)',
+      }} />
+
       {/* Header */}
-      <header style={S.header}>
+      <header style={{ ...S.header, position: 'relative', zIndex: 1 }}>
         <div style={S.logoGroup}>
           <div style={S.logoBadge}>
             <img src={logoRCC} alt="Radio Club Córdoba" style={S.logoImg} />
           </div>
           <div>
             <div style={S.appName}>Koch Trainer</div>
-            <div style={S.clubName}>Radio Club Córdoba</div>
+            <div style={S.clubName}>LU4HH - Radio Club Córdoba</div>
           </div>
         </div>
         <nav style={S.navGroup}>
           <button className="btn btn-ghost" onClick={onOpenProgress}>Progreso</button>
-          <button className="btn btn-ghost" onClick={onOpenSettings}>Settings</button>
+          <button className="btn btn-ghost" onClick={onOpenSettings}>Configuración</button>
         </nav>
       </header>
 
       {/* Main */}
-      <main style={S.main}>
+      <main style={{ ...S.main, position: 'relative', zIndex: 1 }}>
 
         {/* Panel de estado */}
         <div style={S.statusPanel}>
@@ -415,7 +432,7 @@ export function HomeScreen({ onStartTraining, onOpenSettings, onOpenProgress }) 
       </main>
 
       {/* Footer */}
-      <footer style={S.footer}>
+      <footer style={{ ...S.footer, position: 'relative', zIndex: 1 }}>
         <span style={S.footerText}>
           Método Koch · Secuencia {seqName} · {settings.charSpacing !== 1.0 ? `Farnsworth ${settings.charSpacing}×` : 'Spacing estándar'}
         </span>

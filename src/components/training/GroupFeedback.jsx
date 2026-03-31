@@ -1,7 +1,26 @@
 /**
  * GroupFeedback.jsx — Comparación sent vs received con diseño limpio.
+ *
+ * Cambios:
+ *  - Comparación ENV/TU completamente centrada (sin labels flotantes que
+ *    desplazan las letras hacia la derecha).
+ *  - Deletreo fonético auditivo automático al mostrar el feedback
+ *    (Web Speech API, alfabeto ITU: "KILO, MIKE, ALPHA…").
  */
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { ITU_PHONETIC } from '../../constants/ituPhonetic.js';
+
+/**
+ * Convierte un string a fonético ITU para TTS.
+ * "KM" → "Kilo. Mike."
+ */
+function toPhoneticSpeech(text) {
+  return text
+    .toUpperCase()
+    .split('')
+    .map(ch => ITU_PHONETIC[ch] ?? ch)
+    .join('. ');  // punto = pausa natural en TTS
+}
 
 export function GroupFeedback({ feedback, fontSize = 'medium' }) {
   if (!feedback) return null;
@@ -16,9 +35,49 @@ export function GroupFeedback({ feedback, fontSize = 'medium' }) {
       ? { bg: 'rgba(3,58,112,0.15)', border: 'rgba(3,58,112,0.35)', text: 'var(--amber)' }
       : { bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', text: 'var(--red)' };
 
-  return (
-    <div className="slide-up" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+  // ── Deletreo fonético automático ─────────────────────────────────
+  // Se dispara una sola vez al montar (= cada vez que aparece feedback).
+  const spokenRef = useRef(null);
 
+  useEffect(() => {
+    // Evitar repetir si el mismo grupo ya fue leído
+    if (spokenRef.current === sentUp) return;
+    spokenRef.current = sentUp;
+
+    if (!window.speechSynthesis) return;
+
+    // Cancelar cualquier utterance anterior
+    window.speechSynthesis.cancel();
+
+    const text = toPhoneticSpeech(sentUp);
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    // Inglés para que pronuncie los nombres fonéticos correctamente
+    utterance.lang = 'en-US';
+    utterance.rate = 0.88;   // un poco más lento para mayor claridad
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    // Pequeño delay para que el oído se separe del audio Morse
+    const timer = setTimeout(() => {
+      window.speechSynthesis.speak(utterance);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [sentUp]);
+
+  // ── Render ────────────────────────────────────────────────────────
+  return (
+    <div
+      className="slide-up"
+      style={{
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '16px',
+      }}
+    >
       {/* Badge accuracy */}
       <div style={{
         padding: '4px 14px',
@@ -34,34 +93,74 @@ export function GroupFeedback({ feedback, fontSize = 'medium' }) {
         {result.accuracy === 100 ? '✓ PERFECTO' : `${result.accuracy.toFixed(0)}%`}
       </div>
 
-      {/* Comparación */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', maxWidth: '400px' }}>
-        {/* Enviado */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <span style={{ fontFamily: 'var(--font-ui)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', color: 'var(--text-3)', textTransform: 'uppercase', width: '36px', textAlign: 'right', flexShrink: 0 }}>ENV</span>
-          <div className={sizeClass} style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-            {sentUp.split('').map((char, i) => (
-              <span key={i} className={result.details[i]?.isCorrect ? 'char-ok' : 'char-err'}>{char}</span>
-            ))}
-          </div>
+      {/* ── Comparación: ENV y TU completamente centradas ─────────── */}
+      {/*
+        Layout: dos filas, cada una con [LABEL] [CHARS].
+        Para que las letras queden alineadas entre sí, ponemos ambas
+        filas en un contenedor con display:grid de 2 columnas,
+        donde la columna de label tiene ancho fijo y las letras
+        van en la segunda columna centradas.
+        El contenedor completo está centrado con margin: auto.
+      */}
+      <div style={{
+        display: 'inline-grid',
+        gridTemplateColumns: 'auto 1fr',
+        rowGap: '8px',
+        columnGap: '12px',
+        alignItems: 'center',
+      }}>
+        {/* Fila ENV */}
+        <span style={{
+          fontFamily: 'var(--font-ui)',
+          fontSize: '10px',
+          fontWeight: 700,
+          letterSpacing: '0.18em',
+          color: 'var(--text-3)',
+          textTransform: 'uppercase',
+          textAlign: 'right',
+          whiteSpace: 'nowrap',
+        }}>
+          ENV
+        </span>
+        <div className={sizeClass} style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {sentUp.split('').map((char, i) => (
+            <span key={i} className={result.details[i]?.isCorrect ? 'char-ok' : 'char-err'}>{char}</span>
+          ))}
         </div>
 
-        {/* Recibido */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <span style={{ fontFamily: 'var(--font-ui)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', color: 'var(--text-3)', textTransform: 'uppercase', width: '36px', textAlign: 'right', flexShrink: 0 }}>TU</span>
-          <div className={sizeClass} style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-            {sentUp.split('').map((_, i) => {
-              const d = result.details[i];
-              if (!d?.receivedChar) return <span key={i} className="char-miss">_</span>;
-              return <span key={i} className={d.isCorrect ? 'char-ok' : 'char-err'}>{d.receivedChar}</span>;
-            })}
-          </div>
+        {/* Fila TU */}
+        <span style={{
+          fontFamily: 'var(--font-ui)',
+          fontSize: '10px',
+          fontWeight: 700,
+          letterSpacing: '0.18em',
+          color: 'var(--text-3)',
+          textTransform: 'uppercase',
+          textAlign: 'right',
+          whiteSpace: 'nowrap',
+        }}>
+          TU
+        </span>
+        <div className={sizeClass} style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {sentUp.split('').map((_, i) => {
+            const d = result.details[i];
+            if (!d?.receivedChar) return <span key={i} className="char-miss">_</span>;
+            return <span key={i} className={d.isCorrect ? 'char-ok' : 'char-err'}>{d.receivedChar}</span>;
+          })}
         </div>
       </div>
 
       {/* Mini stats */}
-      <div style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'var(--text-3)', display: 'flex', gap: '16px' }}>
-        <span><span style={{ color: 'var(--green)' }}>{result.correctChars}</span>/{result.totalChars} correctos</span>
+      <div style={{
+        fontFamily: 'var(--font-ui)',
+        fontSize: '12px',
+        color: 'var(--text-3)',
+        display: 'flex',
+        gap: '16px',
+      }}>
+        <span>
+          <span style={{ color: 'var(--green)' }}>{result.correctChars}</span>/{result.totalChars} correctos
+        </span>
       </div>
     </div>
   );

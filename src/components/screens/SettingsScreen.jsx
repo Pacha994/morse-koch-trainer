@@ -486,28 +486,35 @@ export function SettingsScreen({ onClose }) {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
 
-      {/* ── Header ──────────────────────────────────────────────── */}
-      <div style={{
+      {/* ── Header — mismo alto y estructura que HomeScreen ─────── */}
+      <header style={{
         position: 'sticky',
         top: 0,
         zIndex: 10,
-        background: 'var(--surface)',
-        borderBottom: '1px solid var(--border)',
-        padding: '14px 24px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        padding: '0 32px',
+        height: '52px',
+        borderBottom: '1px solid var(--border)',
+        background: 'var(--surface)',
+        flexShrink: 0,
       }}>
-        <span style={{
-          fontFamily: 'var(--font-ui)',
-          fontSize: '16px',
-          fontWeight: 700,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          color: 'var(--text-1)',
-        }}>
-          Configuración
-        </span>
+        {/* Logo + nombre app (igual que HomeScreen) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, borderRadius: '50%', overflow: 'hidden' }}>
+            <img src="/logo-rcc.png" alt="Radio Club Córdoba" style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+          </div>
+          <div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-1)', lineHeight: 1 }}>
+              Configuración
+            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: '11px', color: 'var(--text-3)', letterSpacing: '0.06em' }}>
+              LU4HH - Radio Club Córdoba
+            </div>
+          </div>
+        </div>
+        {/* Acciones */}
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
             className="btn btn-ghost"
@@ -515,11 +522,11 @@ export function SettingsScreen({ onClose }) {
           >
             Resetear
           </button>
-          <button className="btn-secondary" onClick={onClose}>
+          <button className="btn btn-ghost" onClick={onClose}>
             ← Volver
           </button>
         </div>
-      </div>
+      </header>
 
       {/* ── Contenido scrolleable con max-width ─────────────────── */}
       <div style={{
@@ -939,7 +946,7 @@ export function SettingsScreen({ onClose }) {
 
         {/* Footer */}
         <div style={{ padding: '32px 0 24px', textAlign: 'center', color: 'var(--text-3)', fontFamily: 'var(--font-ui)', fontSize: '12px' }}>
-          Morse Koch Trainer — Radio Club Córdoba
+          Morse Koch Trainer — LU4HH - Radio Club Córdoba
         </div>
 
       </div>
