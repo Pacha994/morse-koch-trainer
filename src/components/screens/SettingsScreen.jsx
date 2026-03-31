@@ -186,9 +186,9 @@ function Toggle({ options, value, onChange }) {
               fontWeight: 700,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              border: `1px solid ${active ? 'var(--amber)' : 'var(--border-2)'}`,
+              border: `1px solid ${active ? 'rgba(255,255,255,0.85)' : 'var(--border-2)'}`,
               borderRadius: '2px',
-              background: active ? 'var(--amber)' : 'transparent',
+              background: active ? 'rgba(255,255,255,0.85)' : 'transparent',
               color: active ? '#ffffff' : 'var(--btn-inactive-text, #c8c8c8)',
               cursor: 'pointer',
             }}
@@ -285,18 +285,18 @@ function KochLevelSelector({ sequence, level, onChange }) {
               borderRadius: '50%',
               flexShrink: 0,
               background: isSelected
-                ? 'var(--amber)'
+                ? 'rgba(255,255,255,0.9)'
                 : isActive
                   ? 'var(--border-2)'
                   : 'transparent',
-              border: `1px solid ${isActive ? 'var(--amber)' : 'var(--border-2)'}`,
+              border: `1px solid ${isSelected ? 'rgba(255,255,255,0.9)' : isActive ? 'var(--amber)' : 'var(--border-2)'}`,
             }} />
 
             {/* Número de nivel */}
             <span style={{
               fontFamily: 'var(--font-ui)',
               fontSize: '11px',
-              color: 'var(--text-3)',
+              color: isSelected ? 'rgba(255,255,255,0.7)' : 'var(--text-3)',
               width: '18px',
               flexShrink: 0,
             }}>
@@ -309,7 +309,7 @@ function KochLevelSelector({ sequence, level, onChange }) {
               fontSize: '16px',
               fontWeight: 700,
               color: isSelected
-                ? 'var(--amber)'
+                ? 'rgba(255,255,255,1)'
                 : isActive
                   ? 'var(--text-1)'
                   : 'var(--text-3)',
@@ -325,7 +325,7 @@ function KochLevelSelector({ sequence, level, onChange }) {
               fontSize: '14px',
               letterSpacing: '0.12em',
               color: isSelected
-                ? 'var(--amber)'
+                ? 'rgba(255,255,255,0.85)'
                 : 'var(--text-3)',
             }}>
               {MORSE_CODE[char] ?? ''}
