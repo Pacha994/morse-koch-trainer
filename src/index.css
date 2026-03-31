@@ -126,12 +126,12 @@ input, textarea, [contenteditable] {
 .btn-ghost {
   background: transparent;
   color: var(--text-3);
-  font-size: 12px;
-  padding: 6px 12px;
+  font-size: 14px;
+  padding: 6px 14px;
   border-radius: 2px;
   border: none;
 }
-.btn-ghost:hover { color: var(--text-2); background: var(--surface-2); }
+.btn-ghost:hover { color: var(--text-1); background: var(--surface-2); }
 
 /* ── Inputs ───────────────────────────────────────────────────── */
 input[type="text"],
@@ -204,3 +204,48 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
 .char-ok  { color: var(--green); }
 .char-err { color: var(--red); text-decoration: underline; text-decoration-color: var(--red); text-decoration-thickness: 2px; }
 .char-miss{ color: var(--text-3); }
+
+/* ── Settings: botones de opción con hover ────────────────────── */
+/*
+ * Los botones de OptionGrid, Toggle y listas de ejercicio/voz usan
+ * inline styles (para el estado activo dinámico), pero el hover
+ * requiere una clase CSS. Se aplica sobre el estilo inline.
+ */
+.settings-opt-btn {
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+/* Hover solo cuando NO está activo (el activo tiene fondo sólido) */
+.settings-opt-btn:not(.settings-opt-active):hover {
+  background: var(--surface-2) !important;
+  border-color: var(--border-2) !important;
+  color: var(--text-1) !important;
+}
+/* Estado activo: hover sutil para confirmar que es clicable */
+.settings-opt-btn.settings-opt-active:hover {
+  background: var(--amber-hover) !important;
+}
+
+/* Hard letters character grid */
+.hard-letter-btn {
+  transition: background 0.1s, border-color 0.1s, transform 0.08s;
+}
+.hard-letter-btn:not(.hard-letter-active):hover {
+  border-color: var(--border-2) !important;
+  background: var(--surface-3) !important;
+  color: var(--text-1) !important;
+}
+.hard-letter-btn.hard-letter-active:hover {
+  background: var(--amber-hover) !important;
+}
+.hard-letter-btn:active { transform: scale(0.93); }
+
+/* Koch level list rows */
+.koch-level-btn:not(:disabled):hover {
+  background: var(--surface-2) !important;
+}
+
+/* Section accordion header */
+.section-header-btn:hover .section-header-title {
+  color: var(--text-2) !important;
+}
+

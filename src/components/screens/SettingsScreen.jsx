@@ -55,6 +55,7 @@ function Section({ title, children, defaultOpen = false }) {
     <div style={{ borderBottom: '1px solid var(--border)' }}>
       <button
         onClick={() => setOpen(o => !o)}
+        className="section-header-btn"
         style={{
           width: '100%',
           display: 'flex',
@@ -66,14 +67,18 @@ function Section({ title, children, defaultOpen = false }) {
           cursor: 'pointer',
         }}
       >
-        <span style={{
-          fontFamily: 'var(--font-ui)',
-          fontSize: '11px',
-          fontWeight: 700,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          color: 'var(--text-3)',
-        }}>
+        <span
+          className="section-header-title"
+          style={{
+            fontFamily: 'var(--font-ui)',
+            fontSize: '11px',
+            fontWeight: 700,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: open ? 'var(--text-2)' : 'var(--text-3)',
+            transition: 'color 0.12s',
+          }}
+        >
           {title}
         </span>
         <span style={{ color: 'var(--text-3)', fontSize: '10px' }}>
@@ -81,7 +86,7 @@ function Section({ title, children, defaultOpen = false }) {
         </span>
       </button>
       {open && (
-        <div style={{ paddingBottom: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ paddingBottom: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {children}
         </div>
       )}
@@ -97,15 +102,16 @@ function Field({ label, hint, children }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
       <span style={{
         fontFamily: 'var(--font-ui)',
-        fontSize: '14px',
-        fontWeight: 600,
+        fontSize: '13px',
+        fontWeight: 700,
+        letterSpacing: '0.04em',
         color: 'var(--text-2)',
       }}>
         {label}
       </span>
       {hint && (
         <span style={{
-          fontSize: '13px',
+          fontSize: '12px',
           color: 'var(--text-3)',
           lineHeight: 1.4,
         }}>
@@ -134,6 +140,7 @@ function OptionGrid({ options, value, onChange, columns = 3 }) {
           <button
             key={opt.value}
             onClick={() => onChange(opt.value)}
+            className={`settings-opt-btn${active ? ' settings-opt-active' : ''}`}
             style={{
               padding: '10px 4px',
               fontFamily: 'var(--font-mono)',
@@ -146,7 +153,6 @@ function OptionGrid({ options, value, onChange, columns = 3 }) {
               background: active ? 'var(--amber)' : 'transparent',
               color: active ? '#ffffff' : 'var(--btn-inactive-text, #c8c8c8)',
               cursor: 'pointer',
-              transition: 'background 0.1s, color 0.1s, border-color 0.1s',
               textAlign: 'center',
               lineHeight: 1.3,
             }}
@@ -171,6 +177,7 @@ function Toggle({ options, value, onChange }) {
           <button
             key={opt.value}
             onClick={() => onChange(opt.value)}
+            className={`settings-opt-btn${active ? ' settings-opt-active' : ''}`}
             style={{
               flex: 1,
               padding: '11px 0',
@@ -184,7 +191,6 @@ function Toggle({ options, value, onChange }) {
               background: active ? 'var(--amber)' : 'transparent',
               color: active ? '#ffffff' : 'var(--btn-inactive-text, #c8c8c8)',
               cursor: 'pointer',
-              transition: 'background 0.1s, color 0.1s, border-color 0.1s',
             }}
           >
             {opt.label}
@@ -252,6 +258,7 @@ function KochLevelSelector({ sequence, level, onChange }) {
             key={char}
             onClick={() => selectable && onChange(thisLevel)}
             disabled={!selectable}
+            className="koch-level-btn"
             style={{
               width: '100%',
               display: 'flex',
@@ -395,6 +402,7 @@ function HardLettersEditor({ activeChars, hardLetters, onChange }) {
               key={char}
               onClick={() => toggleChar(char)}
               title={MORSE_CODE[char] ?? ''}
+              className={`hard-letter-btn${isHard ? ' hard-letter-active' : ''}`}
               style={{
                 width: '38px',
                 height: '38px',
@@ -410,7 +418,6 @@ function HardLettersEditor({ activeChars, hardLetters, onChange }) {
                 background: isHard ? 'var(--amber)' : 'var(--surface-2)',
                 color: isHard ? '#ffffff' : 'var(--btn-inactive-text, #c8c8c8)',
                 cursor: 'pointer',
-                transition: 'all 0.1s',
               }}
             >
               {char}
@@ -536,6 +543,7 @@ export function SettingsScreen({ onClose }) {
                   <button
                     key={opt.value}
                     onClick={() => updateSetting('exerciseType', opt.value)}
+                    className={`settings-opt-btn${active ? ' settings-opt-active' : ''}`}
                     style={{
                       padding: '10px 14px',
                       textAlign: 'left',
@@ -549,7 +557,6 @@ export function SettingsScreen({ onClose }) {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '10px',
-                      transition: 'all 0.1s',
                     }}
                   >
                     <div style={{
@@ -843,6 +850,7 @@ export function SettingsScreen({ onClose }) {
                   <button
                     key={opt.value}
                     onClick={() => updateSetting('speechMode', opt.value)}
+                    className={`settings-opt-btn${active ? ' settings-opt-active' : ''}`}
                     style={{
                       padding: '10px 14px',
                       textAlign: 'left',
@@ -856,7 +864,6 @@ export function SettingsScreen({ onClose }) {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '10px',
-                      transition: 'all 0.1s',
                     }}
                   >
                     <div style={{
@@ -881,6 +888,7 @@ export function SettingsScreen({ onClose }) {
                       <button
                         key={opt.value}
                         onClick={() => updateSetting('speechLang', opt.value)}
+                        className={`settings-opt-btn${active ? ' settings-opt-active' : ''}`}
                         style={{
                           padding: '9px 14px',
                           textAlign: 'left',
@@ -894,7 +902,6 @@ export function SettingsScreen({ onClose }) {
                           display: 'flex',
                           alignItems: 'center',
                           gap: '10px',
-                          transition: 'all 0.1s',
                         }}
                       >
                         <div style={{

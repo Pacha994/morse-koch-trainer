@@ -7,6 +7,7 @@ import { useSettings }  from '../../context/SettingsContext.jsx';
 import { useProgress }  from '../../context/ProgressContext.jsx';
 import { G4FON_ORDER, LCWO_ORDER } from '../../constants/kochSequences.js';
 import { MORSE_CODE } from '../../constants/morseCodes.js';
+import logoRCC from '/logo-rcc.png';
 
 const S = {
   root: {
@@ -33,17 +34,17 @@ const S = {
     gap: '12px',
   },
   logoBadge: {
-    width: '28px',
-    height: '28px',
-    border: '1px solid var(--amber)',
+    width: '36px',
+    height: '36px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontFamily: 'var(--font-mono)',
-    fontSize: '10px',
-    fontWeight: 700,
-    color: 'var(--amber-text)',
-    letterSpacing: '0.05em',
+    flexShrink: 0,
+  },
+  logoImg: {
+    width: '36px',
+    height: '36px',
+    objectFit: 'contain',
   },
   appName: {
     fontFamily: 'var(--font-ui)',
@@ -308,7 +309,9 @@ export function HomeScreen({ onStartTraining, onOpenSettings, onOpenProgress }) 
       {/* Header */}
       <header style={S.header}>
         <div style={S.logoGroup}>
-          <div style={S.logoBadge}>CW</div>
+          <div style={S.logoBadge}>
+            <img src={logoRCC} alt="Radio Club Córdoba" style={S.logoImg} />
+          </div>
           <div>
             <div style={S.appName}>Koch Trainer</div>
             <div style={S.clubName}>Radio Club Córdoba</div>
