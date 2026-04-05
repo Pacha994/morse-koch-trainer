@@ -1,5 +1,16 @@
 /**
- * TrainingScreen.jsx — Pantalla de entrenamiento rediseñada.
+ * TrainingScreen.jsx
+ * ─────────────────────────────────────────────────────────────────
+ * Pantalla principal de entrenamiento. Orquesta la sesión completa:
+ * audio, input de teclado, feedback por grupo, y resumen final.
+ *
+ * ── Responsabilidades ─────────────────────────────────────────────
+ * - Renderiza los estados de sesión: IDLE → COUNTDOWN → PLAYING_AUDIO
+ *   → WAITING_INPUT → FEEDBACK → (loop) → FINISHED
+ * - Conecta useTrainingSession (lógica) con useKeyboardInput (teclado)
+ * - Calcula activeStr para la pantalla IDLE según el exerciseType
+ * - Muestra SessionSummary al finalizar
+ * ─────────────────────────────────────────────────────────────────
  */
 import React, { useEffect, useRef } from 'react';
 import { useAudioPlayer }     from '../../hooks/useAudioPlayer.js';
@@ -26,6 +37,8 @@ export function TrainingScreen({ onHome, onProgress }) {
   const sessionStartTime = useRef(null);
   const [durationSeconds, setDurationSeconds] = React.useState(0);
 
+  // Medir duración real de la sesión (de primer audio a FINISHED)
+  // para mostrarla en el SessionSummary
   useEffect(() => {
     if (sessionState === SESSION_STATE.PLAYING_AUDIO && !sessionStartTime.current) {
       sessionStartTime.current = Date.now();
@@ -58,6 +71,8 @@ export function TrainingScreen({ onHome, onProgress }) {
     }
   }, [sessionState, currentGroup]);
 
+  // Inicializar AudioContext (requerido por browsers tras gesto del usuario)
+  // y arrancar la sesión desde cero
   const handleStart = () => { initAudio(); sessionStartTime.current = null; startSession(); };
 
   if (sessionState === SESSION_STATE.FINISHED && sessionStats) {
