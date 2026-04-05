@@ -68,7 +68,33 @@ export function TrainingScreen({ onHome, onProgress }) {
 
   const fontSize = { small: 'mono-sm', medium: 'mono-md', large: 'mono-lg', xlarge: 'mono-xl' }[settings.fontSize] ?? 'mono-md';
   const sequence = settings.exerciseType === 'koch_lcwo' ? LCWO_ORDER : G4FON_ORDER;
-  const activeStr = sequence.slice(0, settings.kochLevel).join(' ');
+
+  // Calcular activeStr según el tipo de ejercicio
+  const activeStr = (() => {
+    const type = settings.exerciseType;
+    if (type === 'custom_string') {
+      // Modo cadena personalizada: mostrar la cadena tal cual (truncada si es larga)
+      const cs = (settings.customString || '').trim();
+      return cs.length > 60 ? cs.slice(0, 57) + '…' : cs || '—';
+    }
+    if (type === 'koch_custom' || type === 'words_custom') {
+      // Solo chars del customString
+      const chars = [...new Set(
+        (settings.customString || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+      )];
+      return chars.length > 0 ? chars.join(' ') : '—';
+    }
+    if (type === 'words_custom_g4fon' || type === 'words_custom_lcwo') {
+      // Koch chars + chars del customString
+      const kochChars = sequence.slice(0, settings.kochLevel);
+      const extraChars = [...new Set(
+        (settings.customString || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+      )].filter(c => !kochChars.includes(c));
+      return [...kochChars, ...extraChars].join(' ');
+    }
+    // Koch estándar (g4fon / lcwo)
+    return sequence.slice(0, settings.kochLevel).join(' ');
+  })();
   const isActive = sessionState !== SESSION_STATE.IDLE && sessionState !== SESSION_STATE.COUNTDOWN;
 
   // Tiempo en rojo cuando queda poco
@@ -124,17 +150,17 @@ export function TrainingScreen({ onHome, onProgress }) {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', width: '100%', maxWidth: '440px' }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.2em', color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '4px' }}>
-                Sesión Koch
+                {settings.exerciseType === 'custom_string' ? 'Cadena personalizada' : 'Sesión Koch'}
               </div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: '22px', fontWeight: 700, color: 'var(--text-1)' }}>
-                Nivel {settings.kochLevel}
+                {settings.exerciseType === 'custom_string' ? 'Modo cadena' : `Nivel ${settings.kochLevel}`}
               </div>
             </div>
 
             {/* Chars */}
             <div style={{ width: '100%', padding: '16px 20px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.2em', color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '10px' }}>
-                Caracteres activos
+                {settings.exerciseType === 'custom_string' ? 'Cadena' : 'Caracteres activos'}
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '15px', fontWeight: 600, color: 'var(--amber-text)', letterSpacing: '0.25em', lineHeight: 1.8 }}>
                 {activeStr}
