@@ -146,17 +146,25 @@ export function generateGroup(settings, kochSequence) {
   }
   const hardArray = [...hardSet].filter(c => activeChars.includes(c));
 
-  // Construir el grupo char a char
+  // Construir el grupo char a char.
+  // Para evitar patrones perceptibles (ej: FNFNFN con pool de 2 chars),
+  // nunca se repite el mismo char dos veces seguidas si hay alternativas.
   const group = [];
   for (let i = 0; i < groupLen; i++) {
+    const lastChar = group[group.length - 1] ?? null;
     let selectedChar;
-    if (hardArray.length > 0 && Math.random() < 0.5) {
-      // 50% de probabilidad de elegir un char "difícil"
-      selectedChar = hardArray[Math.floor(Math.random() * hardArray.length)];
-    } else {
-      // El resto: elegir aleatoriamente del pool completo
-      selectedChar = activeChars[Math.floor(Math.random() * activeChars.length)];
-    }
+    let attempts = 0;
+
+    do {
+      if (hardArray.length > 0 && Math.random() < 0.5) {
+        selectedChar = hardArray[Math.floor(Math.random() * hardArray.length)];
+      } else {
+        selectedChar = activeChars[Math.floor(Math.random() * activeChars.length)];
+      }
+      attempts++;
+      // Máx 8 intentos para evitar loop infinito si solo hay 1 char en el pool
+    } while (selectedChar === lastChar && activeChars.length > 1 && attempts < 8);
+
     group.push(selectedChar);
   }
   return group.join('');
