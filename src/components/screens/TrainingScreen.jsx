@@ -36,28 +36,21 @@ export function TrainingScreen({ onHome, onProgress }) {
   }, [sessionState]);
 
   const inputEnabled = sessionState === SESSION_STATE.PLAYING_AUDIO || sessionState === SESSION_STATE.WAITING_INPUT;
-  const { inputText: kbText, clearInput } = useKeyboardInput({
-    enabled: inputEnabled, onConfirm: confirmInput, onPause: togglePause, onRepeat: () => {},
+
+  // inputTextRef expuesto para que useKeyboardInput pueda leer el valor actual
+  // sin stale closure (necesario para la lógica de R = repetir si input vacío)
+  const inputTextRef = React.useRef('');
+  useEffect(() => { inputTextRef.current = inputText; }, [inputText]);
+
+  useKeyboardInput({
+    enabled: inputEnabled,
+    inputTextRef,
+    onChar:      (ch) => setInputText(prev => prev + ch),
+    onBackspace: ()   => setInputText(prev => prev.slice(0, -1)),
+    onConfirm:   confirmInput,
+    onPause:     togglePause,
+    onRepeat:    () => {},
   });
-
-  // Ref para bloquear el sync de kbText durante el ciclo de render en que cambia el grupo.
-  // Cuando currentGroup cambia, primero limpiamos (effect de abajo), y bloqueamos
-  // temporalmente el sync para que el kbText viejo no sobreescriba el '' recién seteado.
-  const blockKbSyncRef = React.useRef(false);
-
-  useEffect(() => {
-    if (blockKbSyncRef.current) return;
-    if (inputEnabled) setInputText(kbText);
-  }, [kbText, inputEnabled, setInputText]);
-
-  useEffect(() => {
-    blockKbSyncRef.current = true;
-    clearInput();
-    setInputText('');
-    // Desbloquear en el siguiente tick, después de que el render limpió kbText
-    const t = setTimeout(() => { blockKbSyncRef.current = false; }, 0);
-    return () => clearTimeout(t);
-  }, [currentGroup, clearInput, setInputText]);
 
   // Cancelar el deletreo fonético cuando empieza a sonar el siguiente grupo
   useEffect(() => {
