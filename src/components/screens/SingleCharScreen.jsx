@@ -19,10 +19,60 @@ import { useProgress }           from '../../context/ProgressContext.jsx';
 import { parseSingleCharSet }    from '../../engine/SingleCharGenerator.js';
 import { MORSE_CODE }            from '../../constants/morseCodes.js';
 
+// ── Workaround Chrome bug: speechSynthesis se congela con Web Audio API ──
+function startSpeechKeepAlive() {
+  const synth = window.speechSynthesis;
+  const id = setInterval(() => {
+    if (!synth.speaking) { clearInterval(id); return; }
+    synth.pause();
+    synth.resume();
+  }, 250);
+  return () => clearInterval(id);
+}
+
 // ── Componente de feedback por carácter ──────────────────────────
-function SingleCharFeedback({ feedback }) {
+function SingleCharFeedback({ feedback, settings }) {
   if (!feedback) return null;
   const { char, typed, isCorrect, phonetic } = feedback;
+
+  // ── TTS: lee el nombre fonético si phoneticReadout está activo ──
+  const utteranceRef  = useRef(null);
+  const timerRef      = useRef(null);
+  const keepAliveRef  = useRef(null);
+  const spokenRef     = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(timerRef.current);
+      if (keepAliveRef.current) { keepAliveRef.current(); keepAliveRef.current = null; }
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+    };
+  }, [char]);
+
+  useEffect(() => {
+    if (!settings?.phoneticReadout) return;
+    if (!window.speechSynthesis) return;
+    if (spokenRef.current === char) return;
+    spokenRef.current = char;
+
+    window.speechSynthesis.cancel();
+    if (keepAliveRef.current) { keepAliveRef.current(); keepAliveRef.current = null; }
+
+    const utterance = new SpeechSynthesisUtterance(phonetic + '.');
+    utterance.lang   = 'en-US';
+    utterance.rate   = 0.85;
+    utterance.pitch  = 1.0;
+    utterance.volume = 1.0;
+    utterance.onend  = () => {
+      if (keepAliveRef.current) { keepAliveRef.current(); keepAliveRef.current = null; }
+    };
+    utteranceRef.current = utterance;
+
+    timerRef.current = setTimeout(() => {
+      window.speechSynthesis.speak(utteranceRef.current);
+      keepAliveRef.current = startSpeechKeepAlive();
+    }, 300);
+  }, [char, phonetic, settings?.phoneticReadout]);
 
   return (
     <div style={{
@@ -126,6 +176,13 @@ export function SingleCharScreen({ onHome, onProgress }) {
       recordSession({ sessionStats, settings, durationSeconds });
     }
   }, [sessionState, sessionStats, durationSeconds, settings, recordSession]);
+
+  // Cancelar TTS cuando empieza a sonar el siguiente carácter
+  useEffect(() => {
+    if (sessionState === SC_STATE.PLAYING_AUDIO && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  }, [sessionState, currentChar]);
 
   // Keyboard listener
   useEffect(() => {
@@ -391,7 +448,7 @@ export function SingleCharScreen({ onHome, onProgress }) {
             {/* Zona central */}
             <div style={{ width: '100%', maxWidth: '400px', minHeight: '180px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               {sessionState === SC_STATE.FEEDBACK ? (
-                <SingleCharFeedback feedback={lastFeedback} />
+                <SingleCharFeedback feedback={lastFeedback} settings={settings} />
               ) : (
                 <div style={{ textAlign: 'center' }}>
                   {sessionState === SC_STATE.WAITING_INPUT && (
