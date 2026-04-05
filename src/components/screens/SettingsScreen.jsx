@@ -483,6 +483,8 @@ export function SettingsScreen({ onClose }) {
     'words_custom_g4fon', 'words_custom_lcwo',
   ].includes(settings.exerciseType);
 
+  const isSingleChar = settings.exerciseType === 'single_char';
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
 
@@ -595,6 +597,36 @@ export function SettingsScreen({ onClose }) {
                   borderRadius: '2px',
                   color: 'var(--text-1)',
                   resize: 'vertical',
+                  outline: 'none',
+                }}
+                onFocus={e => e.target.style.borderColor = 'var(--amber)'}
+                onBlur={e => e.target.style.borderColor = 'var(--border-2)'}
+              />
+            </Field>
+          )}
+
+          {/* Set de caracteres Single Char */}
+          {isSingleChar && (
+            <Field
+              label="Set de caracteres"
+              hint="Ingresá los caracteres que querés practicar. Duplicados e inválidos se ignoran automáticamente."
+            >
+              <input
+                type="text"
+                value={settings.singleCharSet}
+                onChange={e => updateSetting('singleCharSet', e.target.value.toUpperCase())}
+                placeholder="Ej: KMRSUA"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '18px',
+                  letterSpacing: '0.25em',
+                  textTransform: 'uppercase',
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--border-2)',
+                  borderRadius: '2px',
+                  color: 'var(--text-1)',
                   outline: 'none',
                 }}
                 onFocus={e => e.target.style.borderColor = 'var(--amber)'}

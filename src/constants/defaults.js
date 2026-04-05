@@ -133,6 +133,7 @@ export const EXERCISE_TYPES = [
   { value: 'words_custom',        label: 'Palabras de cadena personalizada'          },
   { value: 'words_custom_g4fon',  label: 'Palabras de cadena personalizada y G4FON' },
   { value: 'words_custom_lcwo',   label: 'Palabras de cadena personalizada y LCWO'  },
+  { value: 'single_char',         label: 'Single Char'                               },
 ];
 
 /** Modos de voz (Web Speech API) */
@@ -234,6 +235,9 @@ export const DEFAULT_SETTINGS = {
 
   // Cadena personalizada (para modos custom_string / words_*)
   customString: '',
+
+  // Set de caracteres para modo Single Char (string libre, se parsea en el engine)
+  singleCharSet: '',
 
   // Presets guardados por el usuario (hasta 5)
   // Estructura: [{ id, name, settings: {...} }]
