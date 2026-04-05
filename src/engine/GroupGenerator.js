@@ -1,15 +1,33 @@
 /**
  * GroupGenerator.js
- * Fix: soporte completo para todos los tipos de ejercicio.
- * Bug corregido: generateGroup() ignoraba exerciseType y siempre
- * usaba el pool Koch. Ahora respeta custom_string, koch_custom,
- * words_custom, words_custom_g4fon, words_custom_lcwo.
+ * ─────────────────────────────────────────────────────────────────
+ * Genera grupos de caracteres Morse para los ejercicios de entrenamiento.
+ *
+ * ── Modos soportados ──────────────────────────────────────────────
+ *   custom_string        → subcadena aleatoria del texto personalizado
+ *   koch_custom          → chars únicos del customString
+ *   words_custom         → ídem (alias semántico)
+ *   words_custom_g4fon   → chars Koch del nivel + chars del customString
+ *   words_custom_lcwo    → ídem con secuencia LCWO
+ *   koch_g4fon / lcwo    → chars Koch estándar hasta kochLevel
+ *
+ * ── Aleatoriedad ─────────────────────────────────────────────────
+ * El pool de chars activos se shufflea con Fisher-Yates antes de usarlo
+ * para evitar sesgos perceptibles con pools pequeños (ej: 2 chars).
+ * La lógica de "hard letters" se desactiva cuando el pool tiene <= 2
+ * chars porque con pools tan chicos todos los chars ya son igualmente
+ * frecuentes y el mecanismo no aporta nada útil.
+ * ─────────────────────────────────────────────────────────────────
  */
 
 import { getActiveCharacters } from '../constants/kochSequences.js';
 
-// -- Helpers de cadena personalizada ------------------------------------
+// ── Helpers de cadena personalizada ───────────────────────────────
 
+/**
+ * Extrae tokens (palabras/letras) del customString, eliminando comentarios
+ * entre llaves {así}. Devuelve array de strings en mayúsculas.
+ */
 function parseCustomTokens(customString) {
   if (!customString || typeof customString !== 'string') return [];
   const withoutComments = customString.replace(/\{[^}]*\}/g, '');
@@ -19,6 +37,11 @@ function parseCustomTokens(customString) {
     .filter(t => t.length > 0);
 }
 
+/**
+ * Extrae el conjunto de caracteres únicos del customString.
+ * El orden del array resultante se shufflea en getActivePool para
+ * garantizar aleatoriedad uniforme.
+ */
 function parseCustomChars(customString) {
   const tokens = parseCustomTokens(customString);
   const chars = new Set();
@@ -28,33 +51,68 @@ function parseCustomChars(customString) {
   return [...chars];
 }
 
+/**
+ * Fisher-Yates shuffle — mezcla el array in-place y lo devuelve.
+ * Garantiza distribución uniforme independientemente del tamaño del pool.
+ */
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/**
+ * Devuelve el pool de caracteres activos según el exerciseType.
+ * El resultado siempre viene shuffleado para evitar sesgos de orden.
+ */
 function getActivePool(settings, kochSequence) {
   const type = settings.exerciseType;
   const customChars = parseCustomChars(settings.customString);
   const fallback = ['K', 'M'];
 
+  let pool;
   switch (type) {
     case 'koch_custom':
     case 'words_custom':
-      return customChars.length > 0 ? customChars : fallback;
+      pool = customChars.length > 0 ? customChars : fallback;
+      break;
 
     case 'words_custom_g4fon':
     case 'words_custom_lcwo': {
       const kochChars = getActiveCharacters(kochSequence, settings.kochLevel);
-      return [...new Set([...customChars, ...kochChars])];
+      pool = [...new Set([...customChars, ...kochChars])];
+      break;
     }
 
     case 'koch_lcwo':
     case 'koch_g4fon':
     default:
-      return getActiveCharacters(kochSequence, settings.kochLevel);
+      pool = getActiveCharacters(kochSequence, settings.kochLevel);
+      break;
   }
+
+  // Shuffle para garantizar distribución uniforme con pools pequeños
+  return shuffleArray([...pool]);
 }
 
-// -- Generador principal ------------------------------------------------
+// ── Generador principal ────────────────────────────────────────────
 
+/**
+ * Genera un único grupo de caracteres para un ejercicio.
+ * En modo custom_string toma una subcadena aleatoria del texto configurado.
+ * En el resto de modos elige chars al azar del pool activo.
+ *
+ * @param {object} settings      - Configuración actual (del SettingsContext)
+ * @param {string[]} kochSequence - Secuencia Koch (G4FON o LCWO)
+ * @returns {string}             - Grupo de caracteres a transmitir
+ */
 export function generateGroup(settings, kochSequence) {
 
+  // ── Modo cadena personalizada ──────────────────────────────────
+  // Toma una subcadena aleatoria de los tokens del customString.
+  // No usa el pool de chars individuales sino los tokens completos.
   if (settings.exerciseType === 'custom_string') {
     const tokens = parseCustomTokens(settings.customString);
     if (tokens.length === 0) return 'K';
@@ -66,6 +124,7 @@ export function generateGroup(settings, kochSequence) {
     return tokens.slice(startIdx, startIdx + groupLen).join('') || tokens[0];
   }
 
+  // ── Modos Koch y custom ────────────────────────────────────────
   const activeChars = getActivePool(settings, kochSequence);
   if (activeChars.length === 0) return 'K';
 
@@ -73,21 +132,29 @@ export function generateGroup(settings, kochSequence) {
     ? Math.floor(Math.random() * 5) + 1
     : settings.wordLength;
 
-  const hardSet = new Set(settings.hardLetters || []);
+  // Hard letters: solo se aplica en modos Koch estándar Y con pool > 2.
+  // Con 2 chars o menos el mecanismo no aporta nada — todos los chars
+  // ya están igualmente representados y solo generaría sesgo perceptible.
   const isKochStandard = settings.exerciseType === 'koch_g4fon' ||
                          settings.exerciseType === 'koch_lcwo';
-  if (isKochStandard && settings.autoHardLetters && activeChars.length >= 2) {
+  const hardSet = new Set(settings.hardLetters || []);
+
+  if (isKochStandard && settings.autoHardLetters && activeChars.length > 2) {
+    // Los últimos dos chars de la secuencia Koch son los más nuevos → más difíciles
     hardSet.add(activeChars[activeChars.length - 1]);
     hardSet.add(activeChars[activeChars.length - 2]);
   }
   const hardArray = [...hardSet].filter(c => activeChars.includes(c));
 
+  // Construir el grupo char a char
   const group = [];
   for (let i = 0; i < groupLen; i++) {
     let selectedChar;
     if (hardArray.length > 0 && Math.random() < 0.5) {
+      // 50% de probabilidad de elegir un char "difícil"
       selectedChar = hardArray[Math.floor(Math.random() * hardArray.length)];
     } else {
+      // El resto: elegir aleatoriamente del pool completo
       selectedChar = activeChars[Math.floor(Math.random() * activeChars.length)];
     }
     group.push(selectedChar);
@@ -95,6 +162,14 @@ export function generateGroup(settings, kochSequence) {
   return group.join('');
 }
 
+/**
+ * Genera un lote de grupos para previsualización o análisis.
+ *
+ * @param {number}   count        - Cantidad de grupos a generar
+ * @param {object}   settings     - Configuración actual
+ * @param {string[]} kochSequence - Secuencia Koch (G4FON o LCWO)
+ * @returns {string[]}
+ */
 export function generateGroupBatch(count, settings, kochSequence) {
   const groups = [];
   for (let i = 0; i < count; i++) {
@@ -103,6 +178,15 @@ export function generateGroupBatch(count, settings, kochSequence) {
   return groups;
 }
 
+/**
+ * Analiza la distribución estadística de chars en una muestra simulada.
+ * Útil para verificar que el generador produce distribuciones uniformes.
+ *
+ * @param {string[]} activeChars - Pool de chars activos
+ * @param {string[]} hardChars   - Chars marcados como difíciles
+ * @param {number}   sampleSize  - Tamaño de la muestra (default 1000)
+ * @returns {object}             - Mapa char → frecuencia (0–1)
+ */
 export function analyzeDistribution(activeChars, hardChars, sampleSize = 1000) {
   const counts = {};
   activeChars.forEach(c => { counts[c] = 0; });
