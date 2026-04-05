@@ -8,7 +8,285 @@ import { useProgress }  from '../../context/ProgressContext.jsx';
 import { G4FON_ORDER, LCWO_ORDER } from '../../constants/kochSequences.js';
 import { MORSE_CODE } from '../../constants/morseCodes.js';
 import logoRCC from '/logo-rcc.png';
+/**
+ * HomeScreen.jsx — Pantalla de inicio rediseñada.
+  * Estética: panel de radio de precisión.
+   */
 
+import React from 'react';
+import { useSettings } from '../../context/SettingsContext.jsx';
+import { useProgress } from '../../context/ProgressContext.jsx';
+import { G4FON_ORDER, LCWO_ORDER } from '../../constants/kochSequences.js';
+import { MORSE_CODE } from '../../constants/morseCodes.js';
+import logoRCC from '/logo-rcc.png';
+
+const S = {
+    root: { minHeight: '100dvh', background: 'var(--bg)', display: 'flex', flexDirection: 'column', position: 'relative', },
+    header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px', height: '52px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', flexShrink: 0, },
+    logoGroup: { display: 'flex', alignItems: 'center', gap: '12px', },
+    logoBadge: { width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'transparent', borderRadius: '50%', overflow: 'hidden', },
+    logoImg: { width: '36px', height: '36px', objectFit: 'cover', display: 'block', },
+    appName: { fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-1)', lineHeight: 1, },
+    clubName: { fontFamily: 'var(--font-ui)', fontSize: '11px', color: 'var(--text-3)', letterSpacing: '0.06em', },
+    navGroup: { display: 'flex', gap: '4px', },
+    main: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 32px', gap: '32px', },
+    statusPanel: { width: '100%', maxWidth: '520px', border: '1px solid var(--border)', background: 'var(--surface)', },
+    panelTop: { display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid var(--border)', },
+    panelCell: { padding: '20px 24px', },
+    panelCellRight: { padding: '20px 24px', borderLeft: '1px solid var(--border)', textAlign: 'right', },
+    cellLabel: { fontFamily: 'var(--font-ui)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: '6px', },
+    levelNumber: { fontFamily: 'var(--font-mono)', fontSize: '52px', fontWeight: 700, color: 'var(--text-1)', lineHeight: 1, },
+    speedNumber: { fontFamily: 'var(--font-mono)', fontSize: '44px', fontWeight: 700, color: 'var(--amber-text)', lineHeight: 1, },
+    speedUnit: { fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 500, color: 'var(--text-3)', marginLeft: '4px', },
+    charsRow: { padding: '16px 24px', borderBottom: '1px solid var(--border)', },
+    charsLabel: { fontFamily: 'var(--font-ui)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: '10px', },
+    charsGrid: { display: 'flex', flexWrap: 'wrap', gap: '4px', },
+    charChip: (isHard) => ({ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', padding: '5px 8px', border: `1px solid ${isHard ? 'rgba(3,58,112,0.4)' : 'var(--border)'}`, background: isHard ? 'var(--amber-dim)' : 'var(--surface-2)', borderRadius: '2px', gap: '2px', }),
+    charLetter: (isHard) => ({ fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700, color: isHard ? 'var(--amber-text)' : 'var(--text-2)', lineHeight: 1, }),
+    charCode: { fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--text-3)', letterSpacing: '0.1em', lineHeight: 1, },
+    statsRow: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', },
+    statCell: (idx) => ({ padding: '14px 16px', textAlign: 'center', borderLeft: idx > 0 ? '1px solid var(--border)' : 'none', }),
+    statValue: { fontFamily: 'var(--font-mono)', fontSize: '16px', fontWeight: 600, color: 'var(--text-1)', lineHeight: 1, },
+    statLabel: { fontFamily: 'var(--font-ui)', fontSize: '11px', color: 'var(--text-3)', marginTop: '4px', },
+    startBtn: { width: '100%', maxWidth: '520px', },
+    hints: { display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center', },
+    hint: { fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: '6px', },
+    hintKey: { fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-2)', background: 'var(--surface-2)', border: '1px solid var(--border-2)', borderRadius: '2px', padding: '2px 6px', },
+    globalStats: { display: 'flex', gap: '24px', padding: '12px 20px', border: '1px solid var(--border)', background: 'var(--surface)', },
+    globalStat: { textAlign: 'center', },
+    globalValue: { fontFamily: 'var(--font-mono)', fontSize: '15px', fontWeight: 600, color: 'var(--text-2)', lineHeight: 1, },
+    globalLabel: { fontFamily: 'var(--font-ui)', fontSize: '10px', color: 'var(--text-3)', marginTop: '3px', letterSpacing: '0.06em', },
+    footer: { padding: '12px 32px', borderTop: '1px solid var(--border)', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', },
+    footerText: { fontFamily: 'var(--font-ui)', fontSize: '11px', color: 'var(--text-3)', letterSpacing: '0.06em', },
+};
+
+// -- Helper: extraer caracteres unicos de la cadena personalizada ----------
+function parseCustomChars(customString) {
+    if (!customString || typeof customString !== 'string') return [];
+    const withoutComments = customString.replace(/\{[^}]*\}/g, '');
+    const chars = new Set();
+    withoutComments.split(/\s+/).forEach(token => {
+          [...token.trim().toUpperCase()].forEach(ch => { if (ch.trim()) chars.add(ch); });
+    });
+    return [...chars];
+}
+
+export function HomeScreen({ onStartTraining, onOpenSettings, onOpenProgress }) {
+    const { settings } = useSettings();
+    const { progress, getRecentAccuracy, formattedTotalTime } = useProgress();
+
+    // -- FIX: calcular activeChars y label segun el tipo de ejercicio ---------
+    const isKochMode = settings.exerciseType === 'koch_g4fon' ||
+                           settings.exerciseType === 'koch_lcwo';
+    const sequence = settings.exerciseType === 'koch_lcwo' ? LCWO_ORDER : G4FON_ORDER;
+    const seqName = settings.exerciseType === 'koch_lcwo' ? 'LCWO' : 'G4FON';
+
+    let activeChars;
+    let panelLabel;
+    let panelValue;
+
+    switch (settings.exerciseType) {
+      case 'koch_g4fon':
+              activeChars = sequence.slice(0, settings.kochLevel);
+              panelLabel = 'Nivel Koch · G4FON';
+              panelValue = settings.kochLevel;
+              break;
+      case 'koch_lcwo':
+              activeChars = sequence.slice(0, settings.kochLevel);
+              panelLabel = 'Nivel Koch · LCWO';
+              panelValue = settings.kochLevel;
+              break;
+      case 'koch_custom': {
+              const cc = parseCustomChars(settings.customString);
+              activeChars = cc.length > 0 ? cc : ['K', 'M'];
+              panelLabel = 'Koch · Custom';
+              panelValue = activeChars.length;
+              break;
+      }
+      case 'custom_string': {
+              const cc = parseCustomChars(settings.customString);
+              activeChars = cc.length > 0 ? cc : [];
+              panelLabel = 'Cadena personalizada';
+              panelValue = activeChars.length;
+              break;
+      }
+      case 'words_custom': {
+              const cc = parseCustomChars(settings.customString);
+              activeChars = cc.length > 0 ? cc : [];
+              panelLabel = 'Palabras · Custom';
+              panelValue = activeChars.length;
+              break;
+      }
+      case 'words_custom_g4fon': {
+              const cc = parseCustomChars(settings.customString);
+              const kc = G4FON_ORDER.slice(0, settings.kochLevel);
+              activeChars = [...new Set([...cc, ...kc])];
+              panelLabel = 'Palabras · Custom + G4FON';
+              panelValue = activeChars.length;
+              break;
+      }
+      case 'words_custom_lcwo': {
+              const cc = parseCustomChars(settings.customString);
+              const kc = LCWO_ORDER.slice(0, settings.kochLevel);
+              activeChars = [...new Set([...cc, ...kc])];
+              panelLabel = 'Palabras · Custom + LCWO';
+              panelValue = activeChars.length;
+              break;
+      }
+      default:
+              activeChars = sequence.slice(0, settings.kochLevel);
+              panelLabel = 'Nivel Koch · G4FON';
+              panelValue = settings.kochLevel;
+    }
+
+    const recentAcc = getRecentAccuracy(5);
+
+    // Hard letters (solo relevante en modos Koch estandar)
+    const autoHardSet = isKochMode && settings.autoHardLetters
+      ? new Set([activeChars[activeChars.length - 1], activeChars[activeChars.length - 2]].filter(Boolean))
+          : new Set();
+    const hardSet = new Set([...settings.hardLetters, ...autoHardSet]);
+
+    const durSec = settings.exerciseDuration;
+    const durLabel = durSec < 60 ? `${durSec}s` : `${durSec / 60}m`;
+    const groupLabel = settings.wordLength === 0 ? 'Variable' : `${settings.wordLength}`;
+    const accColor = recentAcc == null ? 'var(--text-3)'
+          : recentAcc >= 90 ? 'var(--green)'
+          : recentAcc >= 70 ? 'var(--amber)'
+          : 'var(--red)';
+
+    return (
+          <div style={S.root}>
+            {/* Dot pattern de fondo */}
+                  <div style={{
+                    position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
+                    backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.10) 1px, transparent 1px)',
+                    backgroundSize: '28px 28px',
+                    maskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)',
+                    WebkitMaskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)',
+          }} />
+
+            {/* Header */}
+                  <header style={{ ...S.header, position: 'relative', zIndex: 1 }}>
+                            <div style={S.logoGroup}>
+                                        <div style={S.logoBadge}>
+                                                      <img src={logoRCC} alt="Radio Club Cordoba" style={S.logoImg} />
+                                        </div>div>
+                                        <div>
+                                                    <div style={S.appName}>Koch Trainer</div>div>
+                                                    <div style={S.clubName}>LU4HH - Radio Club Cordoba</div>div>
+                                        </div>div>
+                            </div>div>
+                          <nav style={S.navGroup}>
+                                    <button className="btn btn-ghost" onClick={onOpenProgress}>Progreso</button>button>
+                                    <button className="btn btn-ghost" onClick={onOpenSettings}>Configuracion</button>button>
+                          </nav>nav>
+                  </header>header>
+          
+            {/* Main */}
+                <main style={{ ...S.main, position: 'relative', zIndex: 1 }}>
+                        <div style={S.statusPanel}>
+                          {/* Panel label + valor */}
+                                  <div style={S.panelTop}>
+                                              <div style={S.panelCell}>
+                                                            <div style={S.cellLabel}>{panelLabel}</div>div>
+                                                            <div style={S.levelNumber}>{panelValue}</div>div>
+                                              </div>div>
+                                              <div style={S.panelCellRight}>
+                                                            <div style={S.cellLabel}>Velocidad</div>div>
+                                                            <div>
+                                                                            <span style={S.speedNumber}>{settings.speedValue}</span>span>
+                                                                            <span style={S.speedUnit}>{settings.speedUnit.toUpperCase()}</span>span>
+                                                            </div>div>
+                                              </div>div>
+                                  </div>div>
+                        
+                          {/* Caracteres activos */}
+                                  <div style={S.charsRow}>
+                                              <div style={S.charsLabel}>Caracteres activos ({activeChars.length})</div>div>
+                                              <div style={S.charsGrid}>
+                                                {activeChars.map(char => {
+                            const isHard = hardSet.has(char);
+                            const code = MORSE_CODE[char] ?? '';
+                            return (
+                                                <div key={char} style={S.charChip(isHard)} title={isHard ? 'Hard letter' : ''}>
+                                                                    <span style={S.charLetter(isHard)}>{char}</span>span>
+                                                                    <span style={S.charCode}>{code}</span>span>
+                                                </div>div>
+                                              );
+          })}
+                                              </div>div>
+                                  </div>div>
+                        
+                          {/* Stats rapidas */}
+                                  <div style={S.statsRow}>
+                                    {[
+            { label: 'Duracion', value: durLabel },
+            { label: 'Grupo', value: groupLabel },
+            { label: 'Acc reciente', value: recentAcc != null ? `${recentAcc.toFixed(0)}%` : '-', color: accColor },
+                        ].map(({ label, value, color }, idx) => (
+                                        <div key={label} style={S.statCell(idx)}>
+                                                        <div style={{ ...S.statValue, color: color ?? 'var(--text-1)' }}>{value}</div>div>
+                                                        <div style={S.statLabel}>{label}</div>div>
+                                        </div>div>
+                                      ))}
+                                  </div>div>
+                        </div>div>
+                
+                  {/* Boton EMPEZAR */}
+                        <div style={S.startBtn}>
+                                  <button
+                                                className="btn btn-primary"
+                                                style={{ width: '100%', fontSize: '16px', padding: '16px' }}
+                                                onClick={onStartTraining}
+                                              >
+                                              EMPEZAR
+                                  </button>button>
+                        </div>div>
+                
+                  {/* Atajos */}
+                        <div style={S.hints}>
+                          {[
+                        ['Enter', 'confirmar'],
+                        ['Esc', 'pausa'],
+                        ['Backspace', 'borrar'],
+                      ].map(([key, desc]) => (
+                                    <div key={key} style={S.hint}>
+                                                  <span style={S.hintKey}>{key}</span>span>
+                                                  <span>{desc}</span>span>
+                                    </div>div>
+                                  ))}
+                        </div>div>
+                
+                  {/* Stats globales */}
+                  {progress.totalSessions > 0 && (
+                      <div style={S.globalStats}>
+                        {[
+                        { label: 'Sesiones', value: progress.totalSessions },
+                        { label: 'Tiempo', value: formattedTotalTime || '0m' },
+                        { label: 'Koch max', value: `L${Math.max(...progress.sessionHistory.map(s => s.kochLevel ?? 0))}` },
+                                    ].map(({ label, value }) => (
+                                                    <div key={label} style={S.globalStat}>
+                                                                    <div style={S.globalValue}>{value}</div>div>
+                                                                    <div style={S.globalLabel}>{label}</div>div>
+                                                    </div>div>
+                                                  ))}
+                      </div>div>
+                        )}
+                </main>main>
+          
+            {/* Footer */}
+                <footer style={{ ...S.footer, position: 'relative', zIndex: 1 }}>
+                        <span style={S.footerText}>
+                          {isKochMode
+                                        ? `Metodo Koch · Secuencia ${seqName} · ${settings.charSpacing !== 1.0 ? `Farnsworth ${settings.charSpacing}x` : 'Spacing estandar'}`
+                                        : `Ejercicio personalizado · ${settings.charSpacing !== 1.0 ? `Farnsworth ${settings.charSpacing}x` : 'Spacing estandar'}`
+                          }
+                        </span>span>
+                </footer>footer>
+          </div>div>
+        );
+}</div>
 const S = {
   root: {
     minHeight: '100dvh',
