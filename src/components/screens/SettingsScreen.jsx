@@ -21,6 +21,7 @@
  */
 
 import React, { useState, useRef } from 'react';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useSettings } from '../../context/SettingsContext.jsx';
 import { G4FON_ORDER, LCWO_ORDER } from '../../constants/kochSequences.js';
 import { MORSE_CODE } from '../../constants/morseCodes.js';
@@ -127,11 +128,13 @@ function Field({ label, hint, children }) {
  * Grilla de botones de opción (radio visual).
  * Cada opción tiene value y label.
  */
-function OptionGrid({ options, value, onChange, columns = 3 }) {
+function OptionGrid({ options, value, onChange, columns = 3, mobileColumns }) {
+  const isMobile = useMediaQuery('(max-width: 767px)');
+  const cols = isMobile && mobileColumns ? mobileColumns : columns;
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: `repeat(${columns}, 1fr)`,
+      gridTemplateColumns: `repeat(${cols}, 1fr)`,
       gap: '6px',
     }}>
       {options.map(opt => {
@@ -388,13 +391,18 @@ function HardLettersEditor({ activeChars, hardLetters, onChange }) {
           color: 'var(--amber-text)',
           outline: 'none',
           width: '100%',
+          boxSizing: 'border-box',
         }}
         onFocus={e => e.target.style.borderColor = 'var(--amber)'}
         onBlur={e => e.target.style.borderColor = 'var(--border-2)'}
       />
 
       {/* Grilla de todos los caracteres activos */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(40px, 1fr))',
+        gap: '5px',
+      }}>
         {activeChars.map(char => {
           const isHard = hardLetters.includes(char);
           return (
@@ -404,7 +412,7 @@ function HardLettersEditor({ activeChars, hardLetters, onChange }) {
               title={MORSE_CODE[char] ?? ''}
               className={`hard-letter-btn${isHard ? ' hard-letter-active' : ''}`}
               style={{
-                width: '38px',
+                width: '100%',
                 height: '38px',
                 fontFamily: 'var(--font-mono)',
                 fontSize: '15px',
@@ -472,6 +480,7 @@ function CheckboxField({ label, hint, checked, onChange }) {
 
 export function SettingsScreen({ onClose }) {
   const { settings, updateSetting, resetToDefaults } = useSettings();
+  const isMobile = useMediaQuery('(max-width: 767px)');
 
   // Secuencia Koch activa según el tipo de ejercicio
   const activeSequence = settings.exerciseType === 'koch_lcwo' ? LCWO_ORDER : G4FON_ORDER;
@@ -496,7 +505,7 @@ export function SettingsScreen({ onClose }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 32px',
+        padding: isMobile ? '0 16px' : '0 32px',
         height: '52px',
         borderBottom: '1px solid var(--border)',
         background: 'var(--surface)',
@@ -507,7 +516,7 @@ export function SettingsScreen({ onClose }) {
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-1)', lineHeight: 1 }}>
             Configuración
           </div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: '11px', color: 'var(--text-3)', letterSpacing: '0.06em' }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: isMobile ? '10px' : '11px', color: 'var(--text-3)', letterSpacing: '0.06em' }}>
             LU4HH - Radio Club Córdoba
           </div>
         </div>
@@ -529,8 +538,8 @@ export function SettingsScreen({ onClose }) {
       <div style={{
         flex: 1,
         overflowY: 'auto',
-        padding: '0 24px',
-        maxWidth: '640px',
+        padding: isMobile ? '0 16px' : '0 24px',
+        maxWidth: isMobile ? undefined : '640px',
         width: '100%',
         margin: '0 auto',
       }}>
@@ -587,6 +596,7 @@ export function SettingsScreen({ onClose }) {
                 placeholder="A B C D E F G H I J K L M N O P Q R S T U V W X Y Z&#10;1 2 3 4 5 6 7 8 9 0 ? / = . ,&#10;<AR> <SK> <BT> <KN>"
                 style={{
                   width: '100%',
+                  boxSizing: 'border-box',
                   padding: '10px 12px',
                   fontFamily: 'var(--font-mono)',
                   fontSize: '15px',
@@ -618,6 +628,7 @@ export function SettingsScreen({ onClose }) {
                 placeholder="Ej: KMRSUA"
                 style={{
                   width: '100%',
+                  boxSizing: 'border-box',
                   padding: '10px 12px',
                   fontFamily: 'var(--font-mono)',
                   fontSize: '18px',
@@ -667,6 +678,7 @@ export function SettingsScreen({ onClose }) {
               value={settings.exerciseDuration}
               onChange={v => updateSetting('exerciseDuration', v)}
               columns={4}
+              mobileColumns={2}
             />
           </Field>
 
@@ -679,6 +691,7 @@ export function SettingsScreen({ onClose }) {
               value={settings.wordLength}
               onChange={v => updateSetting('wordLength', v)}
               columns={3}
+              mobileColumns={2}
             />
           </Field>
 
@@ -688,6 +701,7 @@ export function SettingsScreen({ onClose }) {
               value={settings.startPause}
               onChange={v => updateSetting('startPause', v)}
               columns={5}
+              mobileColumns={3}
             />
           </Field>
 
@@ -736,6 +750,7 @@ export function SettingsScreen({ onClose }) {
               value={settings.charSpacing}
               onChange={v => updateSetting('charSpacing', v)}
               columns={3}
+              mobileColumns={3}
             />
           </Field>
 
@@ -748,6 +763,7 @@ export function SettingsScreen({ onClose }) {
               value={settings.wordSpacing}
               onChange={v => updateSetting('wordSpacing', v)}
               columns={3}
+              mobileColumns={3}
             />
           </Field>
 
@@ -757,6 +773,7 @@ export function SettingsScreen({ onClose }) {
               value={settings.dashDotRatio}
               onChange={v => updateSetting('dashDotRatio', v)}
               columns={3}
+              mobileColumns={3}
             />
           </Field>
 
@@ -771,6 +788,7 @@ export function SettingsScreen({ onClose }) {
               value={settings.sidetoneFrequency}
               onChange={v => updateSetting('sidetoneFrequency', v)}
               columns={4}
+              mobileColumns={2}
             />
           </Field>
 
@@ -783,6 +801,7 @@ export function SettingsScreen({ onClose }) {
               value={settings.dotPitch}
               onChange={v => updateSetting('dotPitch', v)}
               columns={2}
+              mobileColumns={2}
             />
           </Field>
 
@@ -792,6 +811,7 @@ export function SettingsScreen({ onClose }) {
               value={settings.toneAttack}
               onChange={v => updateSetting('toneAttack', v)}
               columns={4}
+              mobileColumns={2}
             />
           </Field>
 
@@ -801,6 +821,7 @@ export function SettingsScreen({ onClose }) {
               value={settings.toneRelease}
               onChange={v => updateSetting('toneRelease', v)}
               columns={4}
+              mobileColumns={2}
             />
           </Field>
 
@@ -850,6 +871,7 @@ export function SettingsScreen({ onClose }) {
                 value={settings.groupPrintDelay}
                 onChange={v => updateSetting('groupPrintDelay', v)}
                 columns={3}
+                mobileColumns={2}
               />
             </Field>
           )}
@@ -860,6 +882,7 @@ export function SettingsScreen({ onClose }) {
               value={settings.fontSize}
               onChange={v => updateSetting('fontSize', v)}
               columns={4}
+              mobileColumns={2}
             />
           </Field>
 
@@ -997,6 +1020,7 @@ export function SettingsScreen({ onClose }) {
                   value={settings.timeBeforeSpeech}
                   onChange={v => updateSetting('timeBeforeSpeech', v)}
                   columns={3}
+                  mobileColumns={2}
                 />
               </Field>
 
@@ -1006,6 +1030,7 @@ export function SettingsScreen({ onClose }) {
                   value={settings.timeAfterSpeech}
                   onChange={v => updateSetting('timeAfterSpeech', v)}
                   columns={3}
+                  mobileColumns={2}
                 />
               </Field>
             </>
