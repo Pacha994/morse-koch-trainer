@@ -21,21 +21,12 @@ const MobileInputCapture = forwardRef(function MobileInputCapture(
     blur: () => inputRef.current?.blur(),
   }));
 
-  useEffect(() => {
-    inputRef.current?.blur();
-  }, []);
-
-  useEffect(() => {
-    if (!enabled) inputRef.current?.blur();
-  }, [enabled]);
-
   const handleChange = (e) => {
     const raw = e.target.value.replace(/​/g, '');
     const lastChar = raw.slice(-1).toUpperCase();
     if (lastChar && VALID_INPUT_CHARS.has(lastChar)) {
       onChar(lastChar);
     }
-    // Reset synchronously via DOM — keep sentinel so input is never empty
     e.target.value = SENTINEL;
   };
 
@@ -46,7 +37,6 @@ const MobileInputCapture = forwardRef(function MobileInputCapture(
   };
 
   const handleBlur = () => {
-    // Use enabledRef (not closure over enabled) to avoid stale state
     if (enabledRef.current) {
       setTimeout(() => {
         if (enabledRef.current && inputRef.current) {
