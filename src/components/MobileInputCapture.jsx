@@ -13,6 +13,8 @@ const MobileInputCapture = forwardRef(function MobileInputCapture(
     blur: () => inputRef.current?.blur(),
   }));
 
+  useEffect(() => { inputRef.current?.blur(); }, []);
+
   useEffect(() => {
     if (!enabled && inputRef.current) {
       inputRef.current.blur();
@@ -20,12 +22,12 @@ const MobileInputCapture = forwardRef(function MobileInputCapture(
   }, [enabled]);
 
   const handleChange = (e) => {
-    const newValue = e.target.value.toUpperCase();
-    const lastChar = newValue.slice(-1);
-    if (VALID_INPUT_CHARS.has(lastChar)) {
+    const raw = e.target.value.replace('​', '');
+    const lastChar = raw.slice(-1).toUpperCase();
+    if (lastChar && VALID_INPUT_CHARS.has(lastChar)) {
       onChar(lastChar);
     }
-    e.target.value = '';
+    e.target.value = '​';
   };
 
   const handleKeyDown = (e) => {
@@ -42,6 +44,7 @@ const MobileInputCapture = forwardRef(function MobileInputCapture(
     <input
       ref={inputRef}
       type="text"
+      defaultValue="​"
       autoCapitalize="characters"
       autoCorrect="off"
       autoComplete="off"

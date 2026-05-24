@@ -78,7 +78,7 @@ export function TrainingScreen({ onHome, onProgress }) {
 
   // Inicializar AudioContext (requerido por browsers tras gesto del usuario)
   // y arrancar la sesión desde cero
-  const handleStart = () => { if (isMobile) mobileInputRef.current?.focus(); initAudio(); sessionStartTime.current = null; startSession(); };
+  const handleStart = () => { initAudio(); sessionStartTime.current = null; startSession(); if (isMobile) setTimeout(() => mobileInputRef.current?.focus(), 80); };
 
   if (sessionState === SESSION_STATE.FINISHED && sessionStats) {
     return (
@@ -316,7 +316,7 @@ export function TrainingScreen({ onHome, onProgress }) {
         </div>
       )}
 
-      {isMobile && (
+      {isMobile && sessionState !== SESSION_STATE.IDLE && (
         <MobileInputCapture
           ref={mobileInputRef}
           enabled={mobileInputEnabled}

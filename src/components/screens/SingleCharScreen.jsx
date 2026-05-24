@@ -202,11 +202,11 @@ export function SingleCharScreen({ onHome, onProgress }) {
   }, [handleKeyPress, togglePause]);
 
   const handleStart = () => {
-    if (isMobile) mobileInputRef.current?.focus();
     hasRecorded.current = false;
     sessionStartTime.current = null;
     initAudio();
     startSession();
+    if (isMobile) setTimeout(() => mobileInputRef.current?.focus(), 80);
   };
 
   const mins = Math.floor(timeRemaining / 60);
@@ -512,7 +512,7 @@ export function SingleCharScreen({ onHome, onProgress }) {
         </div>
       )}
 
-      {isMobile && (
+      {isMobile && sessionState !== SC_STATE.IDLE && (
         <MobileInputCapture
           ref={mobileInputRef}
           enabled={inputEnabled}
