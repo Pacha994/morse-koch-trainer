@@ -1,33 +1,42 @@
 import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 
 const VALID_INPUT_CHARS = new Set('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,?/=');
+const SENTINEL = '​';
 
 const MobileInputCapture = forwardRef(function MobileInputCapture(
   { enabled, onChar, onBackspace, onConfirm, onPause },
   ref
 ) {
   const inputRef = useRef(null);
+  const enabledRef = useRef(enabled);
+
+  useEffect(() => { enabledRef.current = enabled; }, [enabled]);
 
   useImperativeHandle(ref, () => ({
-    focus: () => inputRef.current?.focus(),
+    focus: () => {
+      if (!inputRef.current) return;
+      inputRef.current.value = SENTINEL;
+      inputRef.current.focus();
+    },
     blur: () => inputRef.current?.blur(),
   }));
 
-  useEffect(() => { inputRef.current?.blur(); }, []);
+  useEffect(() => {
+    inputRef.current?.blur();
+  }, []);
 
   useEffect(() => {
-    if (!enabled && inputRef.current) {
-      inputRef.current.blur();
-    }
+    if (!enabled) inputRef.current?.blur();
   }, [enabled]);
 
   const handleChange = (e) => {
-    const raw = e.target.value.replace('​', '');
+    const raw = e.target.value.replace(/​/g, '');
     const lastChar = raw.slice(-1).toUpperCase();
     if (lastChar && VALID_INPUT_CHARS.has(lastChar)) {
       onChar(lastChar);
     }
-    e.target.value = '​';
+    // Reset synchronously via DOM — keep sentinel so input is never empty
+    e.target.value = SENTINEL;
   };
 
   const handleKeyDown = (e) => {
@@ -37,14 +46,21 @@ const MobileInputCapture = forwardRef(function MobileInputCapture(
   };
 
   const handleBlur = () => {
-    if (enabled) setTimeout(() => inputRef.current?.focus(), 0);
+    // Use enabledRef (not closure over enabled) to avoid stale state
+    if (enabledRef.current) {
+      setTimeout(() => {
+        if (enabledRef.current && inputRef.current) {
+          inputRef.current.value = SENTINEL;
+          inputRef.current.focus();
+        }
+      }, 150);
+    }
   };
 
   return (
     <input
       ref={inputRef}
       type="text"
-      defaultValue="​"
       autoCapitalize="characters"
       autoCorrect="off"
       autoComplete="off"
@@ -53,7 +69,12 @@ const MobileInputCapture = forwardRef(function MobileInputCapture(
       onChange={handleChange}
       onKeyDown={handleKeyDown}
       onBlur={handleBlur}
-      style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }}
+      style={{
+        position: 'absolute',
+        left: '-9999px',
+        opacity: 0,
+        pointerEvents: 'none',
+      }}
       aria-hidden="true"
     />
   );
