@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useSettings } from '../../context/SettingsContext.jsx';
 import { useProgress } from '../../context/ProgressContext.jsx';
 import { G4FON_ORDER, LCWO_ORDER } from '../../constants/kochSequences.js';
@@ -64,6 +65,7 @@ function parseCustomChars(customString) {
 export function HomeScreen({ onStartTraining, onOpenSettings, onOpenProgress }) {
   const { settings } = useSettings();
   const { progress, getRecentAccuracy, formattedTotalTime } = useProgress();
+  const isMobile = useMediaQuery('(max-width: 767px)');
 
   // -- FIX: calcular activeChars y label según el tipo de ejercicio ----------
   const isKochMode = settings.exerciseType === 'koch_g4fon' ||
@@ -157,7 +159,7 @@ export function HomeScreen({ onStartTraining, onOpenSettings, onOpenProgress }) 
       }} />
 
       {/* Header */}
-      <header style={{ ...S.header, position: 'relative', zIndex: 1 }}>
+      <header style={{ ...S.header, position: 'relative', zIndex: 1, padding: isMobile ? '0 16px' : '0 32px' }}>
         <div style={S.logoGroup}>
           <div style={S.logoBadge}>
             <img src={logoRCC} alt="Radio Club Córdoba" style={S.logoImg} />
@@ -174,15 +176,19 @@ export function HomeScreen({ onStartTraining, onOpenSettings, onOpenProgress }) 
       </header>
 
       {/* Main */}
-      <main style={{ ...S.main, position: 'relative', zIndex: 1 }}>
-        <div style={S.statusPanel}>
+      <main style={{ ...S.main, position: 'relative', zIndex: 1, padding: isMobile ? '24px 16px' : '40px 32px', gap: isMobile ? '24px' : '32px' }}>
+        <div style={{ ...S.statusPanel, maxWidth: isMobile ? undefined : '520px' }}>
           {/* Panel label + valor */}
-          <div style={S.panelTop}>
+          <div style={{ ...S.panelTop, gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
             <div style={S.panelCell}>
               <div style={S.cellLabel}>{panelLabel}</div>
               <div style={S.levelNumber}>{panelValue}</div>
             </div>
-            <div style={S.panelCellRight}>
+            <div style={{
+              ...S.panelCellRight,
+              borderLeft: isMobile ? 'none' : '1px solid var(--border)',
+              borderTop: isMobile ? '1px solid var(--border)' : 'none',
+            }}>
               <div style={S.cellLabel}>Velocidad</div>
               <div>
                 <span style={S.speedNumber}>{settings.speedValue}</span>
@@ -192,14 +198,14 @@ export function HomeScreen({ onStartTraining, onOpenSettings, onOpenProgress }) 
           </div>
 
           {/* Caracteres activos */}
-          <div style={S.charsRow}>
+          <div style={{ ...S.charsRow, padding: isMobile ? '12px 16px' : '16px 24px' }}>
             <div style={S.charsLabel}>Caracteres activos ({activeChars.length})</div>
             <div style={S.charsGrid}>
               {activeChars.map(char => {
                 const isHard = hardSet.has(char);
                 const code = MORSE_CODE[char] ?? '';
                 return (
-                  <div key={char} style={S.charChip(isHard)} title={isHard ? 'Hard letter' : ''}>
+                  <div key={char} style={{ ...S.charChip(isHard), padding: isMobile ? '4px 6px' : '5px 8px' }} title={isHard ? 'Hard letter' : ''}>
                     <span style={S.charLetter(isHard)}>{char}</span>
                     <span style={S.charCode}>{code}</span>
                   </div>
@@ -224,7 +230,7 @@ export function HomeScreen({ onStartTraining, onOpenSettings, onOpenProgress }) 
         </div>
 
         {/* Botón EMPEZAR */}
-        <div style={S.startBtn}>
+        <div style={{ ...S.startBtn, maxWidth: isMobile ? undefined : '520px' }}>
           <button
             className="btn btn-primary"
             style={{ width: '100%', fontSize: '16px', padding: '16px' }}
@@ -250,15 +256,15 @@ export function HomeScreen({ onStartTraining, onOpenSettings, onOpenProgress }) 
 
         {/* Stats globales */}
         {progress.totalSessions > 0 && (
-          <div style={S.globalStats}>
+          <div style={{ ...S.globalStats, gap: isMobile ? '12px' : '24px' }}>
             {[
               { label: 'Sesiones', value: progress.totalSessions },
               { label: 'Tiempo', value: formattedTotalTime || '0m' },
               { label: 'Koch max', value: `L${Math.max(...progress.sessionHistory.map(s => s.kochLevel ?? 0))}` },
             ].map(({ label, value }) => (
               <div key={label} style={S.globalStat}>
-                <div style={S.globalValue}>{value}</div>
-                <div style={S.globalLabel}>{label}</div>
+                <div style={{ ...S.globalValue, fontSize: isMobile ? '13px' : '15px' }}>{value}</div>
+                <div style={{ ...S.globalLabel, fontSize: isMobile ? '9px' : '10px' }}>{label}</div>
               </div>
             ))}
           </div>

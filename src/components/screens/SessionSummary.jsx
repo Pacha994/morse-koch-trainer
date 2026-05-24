@@ -2,12 +2,14 @@
  * SessionSummary.jsx — Resultados post-sesión rediseñado.
  */
 import React, { useEffect, useRef } from 'react';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { charAccuracy }  from '../../engine/AccuracyCalculator.js';
 import { useProgress }   from '../../context/ProgressContext.jsx';
 
 export function SessionSummary({ sessionStats, sessionResults, settings, durationSeconds, onRestart, onHome, onProgress }) {
   const { recordSession } = useProgress();
   const hasRecorded = useRef(false);
+  const isMobile = useMediaQuery('(max-width: 767px)');
 
   useEffect(() => {
     if (!hasRecorded.current && sessionStats?.totalChars > 0) {
@@ -34,7 +36,7 @@ export function SessionSummary({ sessionStats, sessionResults, settings, duratio
     <div style={{ minHeight: '100dvh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
 
       {/* Header */}
-      <div style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', flexShrink: 0 }}>
+      <div style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '0 16px' : '0 24px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', flexShrink: 0 }}>
         <span style={{ fontFamily: 'var(--font-ui)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-3)' }}>
           Resumen de sesión
         </span>
@@ -45,7 +47,7 @@ export function SessionSummary({ sessionStats, sessionResults, settings, duratio
       </div>
 
       {/* Contenido */}
-      <div style={{ flex: 1, overflowY: 'auto', maxWidth: '600px', width: '100%', margin: '0 auto', padding: '32px 24px 48px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', maxWidth: isMobile ? undefined : '600px', width: '100%', margin: '0 auto', padding: isMobile ? '24px 16px 48px' : '32px 24px 48px' }}>
 
         {/* Accuracy grande */}
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
@@ -69,8 +71,8 @@ export function SessionSummary({ sessionStats, sessionResults, settings, duratio
             { l: 'Correctos', v: correctChars },
             { l: 'Total',     v: totalChars },
           ].map(({ l, v }, i) => (
-            <div key={l} style={{ padding: '20px 16px', textAlign: 'center', borderLeft: i > 0 ? '1px solid var(--border)' : 'none' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '24px', fontWeight: 700, color: 'var(--text-1)', lineHeight: 1 }}>{v}</div>
+            <div key={l} style={{ padding: isMobile ? '14px 10px' : '20px 16px', textAlign: 'center', borderLeft: i > 0 ? '1px solid var(--border)' : 'none' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? '18px' : '24px', fontWeight: 700, color: 'var(--text-1)', lineHeight: 1 }}>{v}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: '11px', color: 'var(--text-3)', marginTop: '6px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{l}</div>
             </div>
           ))}
@@ -82,7 +84,7 @@ export function SessionSummary({ sessionStats, sessionResults, settings, duratio
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: '12px' }}>
               Precisión por carácter — peores primero
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '4px' }}>
               {charEntries.map(({ char, acc, correct, total }) => {
                 const c = acc >= 90 ? 'var(--green)' : acc >= 70 ? 'var(--amber)' : 'var(--red)';
                 return (
@@ -112,10 +114,10 @@ export function SessionSummary({ sessionStats, sessionResults, settings, duratio
         )}
 
         {/* Acciones */}
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button className="btn btn-primary" style={{ flex: 1, padding: '14px' }} onClick={onRestart}>Nueva sesión</button>
-          <button className="btn btn-secondary" onClick={onProgress}>Ver progreso</button>
-          <button className="btn btn-secondary" onClick={onHome}>Inicio</button>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '10px' }}>
+          <button className="btn btn-primary" style={{ flex: isMobile ? undefined : 1, width: isMobile ? '100%' : undefined, padding: '14px' }} onClick={onRestart}>Nueva sesión</button>
+          <button className="btn btn-secondary" style={{ width: isMobile ? '100%' : undefined }} onClick={onProgress}>Ver progreso</button>
+          <button className="btn btn-secondary" style={{ width: isMobile ? '100%' : undefined }} onClick={onHome}>Inicio</button>
         </div>
       </div>
     </div>

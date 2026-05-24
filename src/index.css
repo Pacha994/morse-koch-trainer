@@ -40,6 +40,32 @@
   --morse-lg: clamp(2rem,   5vw, 4rem);
   --morse-md: clamp(1.5rem, 3vw, 2.5rem);
   --morse-sm: clamp(1.1rem, 2vw, 1.6rem);
+
+  --bp-desktop: 768px;
+}
+
+/* ── Layout utilities ─────────────────────────────────────────── */
+.container-narrow {
+  width: 100%;
+  padding: 0 16px;
+  margin: 0 auto;
+}
+@media (min-width: 768px) {
+  .container-narrow { max-width: 520px; padding: 0 32px; }
+}
+
+.container-wide {
+  width: 100%;
+  padding: 0 16px;
+  margin: 0 auto;
+}
+@media (min-width: 768px) {
+  .container-wide { max-width: 640px; padding: 0 32px; }
+}
+
+.app-padding-x { padding-left: 16px; padding-right: 16px; }
+@media (min-width: 768px) {
+  .app-padding-x { padding-left: 32px; padding-right: 32px; }
 }
 
 /* ── Reset ────────────────────────────────────────────────────── */
@@ -286,4 +312,7 @@ input[type="range"]::-moz-range-progress {
 .section-header-btn:hover .section-header-title {
   color: var(--text-2) !important;
 }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { overflow-x: hidden; max-width: 100vw; }
 

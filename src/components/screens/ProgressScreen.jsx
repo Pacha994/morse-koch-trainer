@@ -2,6 +2,7 @@
  * ProgressScreen.jsx — Pantalla de progreso rediseñada.
  */
 import React from 'react';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useProgress } from '../../context/ProgressContext.jsx';
 import { charAccuracy } from '../../engine/AccuracyCalculator.js';
 
@@ -46,13 +47,17 @@ function CharHeatmap({ characterStats }) {
     .sort((a, b) => a.acc - b.acc);
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(40px, 1fr))',
+      gap: '4px',
+    }}>
       {sorted.map(({ char, acc, total }) => {
         const c = acc >= 90 ? 'var(--green)' : acc >= 70 ? 'var(--amber)' : 'var(--red)';
         const bg = acc >= 90 ? 'rgba(34,197,94,0.1)' : acc >= 70 ? 'rgba(3,58,112,0.15)' : 'rgba(239,68,68,0.1)';
         return (
           <div key={char} title={`${char}: ${acc.toFixed(0)}% (${total} veces)`}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 8px', border: `1px solid ${c}33`, background: bg, borderRadius: '2px', minWidth: '40px', gap: '2px' }}>
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 4px', border: `1px solid ${c}33`, background: bg, borderRadius: '2px', gap: '2px' }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '15px', fontWeight: 700, color: 'var(--text-1)', lineHeight: 1 }}>{char}</span>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: c, lineHeight: 1 }}>{acc.toFixed(0)}%</span>
           </div>
@@ -64,6 +69,7 @@ function CharHeatmap({ characterStats }) {
 
 export function ProgressScreen({ onClose }) {
   const { progress, getRecentSessions, getRecentAccuracy, formattedTotalTime, resetProgress } = useProgress();
+  const isMobile = useMediaQuery('(max-width: 767px)');
   const recentSessions = getRecentSessions(20);
   const recentAccuracy = getRecentAccuracy(5);
   const allSessions    = [...progress.sessionHistory];
@@ -73,12 +79,12 @@ export function ProgressScreen({ onClose }) {
     <div style={{ minHeight: '100dvh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
 
       {/* Header */}
-      <div style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', flexShrink: 0 }}>
+      <div style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '0 16px' : '0 24px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', flexShrink: 0 }}>
         <span style={{ fontFamily: 'var(--font-ui)', fontSize: '15px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-1)' }}>Progreso</span>
         <button className="btn btn-secondary" onClick={onClose}>← Volver</button>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', maxWidth: '600px', width: '100%', margin: '0 auto', padding: '28px 24px 48px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', maxWidth: isMobile ? undefined : '600px', width: '100%', margin: '0 auto', padding: isMobile ? '20px 16px 48px' : '28px 24px 48px', display: 'flex', flexDirection: 'column', gap: isMobile ? '20px' : '28px' }}>
 
         {/* Stats globales */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: 'var(--border)' }}>
@@ -90,7 +96,7 @@ export function ProgressScreen({ onClose }) {
               c: recentAccuracy != null ? (recentAccuracy >= 90 ? 'var(--green)' : recentAccuracy >= 70 ? 'var(--amber)' : 'var(--red)') : undefined },
           ].map(({ l, v, c }) => (
             <div key={l} style={{ padding: '18px 20px', background: 'var(--surface)' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '22px', fontWeight: 700, color: c ?? 'var(--text-1)', lineHeight: 1 }}>{v}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? '18px' : '22px', fontWeight: 700, color: c ?? 'var(--text-1)', lineHeight: 1 }}>{v}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: '11px', color: 'var(--text-3)', marginTop: '4px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{l}</div>
             </div>
           ))}
@@ -124,8 +130,8 @@ export function ProgressScreen({ onClose }) {
                 const d = new Date(s.date);
                 return (
                   <div key={s.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', fontWeight: 700, color: c, minWidth: '50px' }}>{s.accuracy.toFixed(0)}%</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '16px' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? '15px' : '18px', fontWeight: 700, color: c, minWidth: '46px' }}>{s.accuracy.toFixed(0)}%</span>
                       <div>
                         <span style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', color: 'var(--text-2)' }}>Koch L{s.kochLevel}</span>
                         <span style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'var(--text-3)', marginLeft: '10px' }}>{s.speedValue} {s.speedUnit.toUpperCase()}</span>

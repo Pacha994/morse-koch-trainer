@@ -12,6 +12,8 @@
  */
 
 import React, { useEffect, useRef } from 'react';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
+import MobileInputCapture from '../MobileInputCapture';
 import { useAudioPlayer }        from '../../hooks/useAudioPlayer.js';
 import { useSingleCharSession, SC_STATE } from '../../hooks/useSingleCharSession.js';
 import { useSettings }           from '../../context/SettingsContext.jsx';
@@ -31,7 +33,7 @@ function startSpeechKeepAlive() {
 }
 
 // ── Componente de feedback por carácter ──────────────────────────
-function SingleCharFeedback({ feedback, settings }) {
+function SingleCharFeedback({ feedback, settings, isMobile }) {
   if (!feedback) return null;
   const { char, typed, isCorrect, phonetic } = feedback;
 
@@ -96,7 +98,7 @@ function SingleCharFeedback({ feedback, settings }) {
       {/* Nombre fonético */}
       <div style={{
         fontFamily: 'var(--font-ui)',
-        fontSize: '22px',
+        fontSize: isMobile ? '18px' : '22px',
         fontWeight: 600,
         letterSpacing: '0.08em',
         color: isCorrect ? 'var(--green)' : 'var(--red)',
@@ -155,10 +157,15 @@ export function SingleCharScreen({ onHome, onProgress }) {
     handleKeyPress,
   } = useSingleCharSession({ settings, charSet, playGroup, stopAudio });
 
+  const isMobile = useMediaQuery('(max-width: 767px)');
+  const mobileInputRef = useRef(null);
+
   // Referencia de tiempo de inicio para duración real
   const sessionStartTime = useRef(null);
   const [durationSeconds, setDurationSeconds] = React.useState(0);
   const hasRecorded = useRef(false);
+
+  const inputEnabled = isMobile && sessionState === SC_STATE.WAITING_INPUT;
 
   useEffect(() => {
     if (sessionState === SC_STATE.PLAYING_AUDIO && !sessionStartTime.current) {
@@ -195,6 +202,7 @@ export function SingleCharScreen({ onHome, onProgress }) {
   }, [handleKeyPress, togglePause]);
 
   const handleStart = () => {
+    if (isMobile) mobileInputRef.current?.focus();
     hasRecorded.current = false;
     sessionStartTime.current = null;
     initAudio();
@@ -345,7 +353,12 @@ export function SingleCharScreen({ onHome, onProgress }) {
         <div style={{ display: 'flex', gap: '4px', minWidth: '90px', justifyContent: 'flex-end' }}>
           {sessionState !== SC_STATE.IDLE ? (
             <>
-              <button className="btn btn-ghost" onClick={togglePause}>
+              <button className="btn btn-ghost" onClick={() => {
+                if (isMobile) {
+                  sessionState === SC_STATE.PAUSED ? mobileInputRef.current?.focus() : mobileInputRef.current?.blur();
+                }
+                togglePause();
+              }}>
                 {sessionState === SC_STATE.PAUSED ? 'Resumir' : 'Pausa'}
               </button>
               <button className="btn btn-ghost" onClick={() => { endSession(); onHome(); }}>✕</button>
@@ -357,7 +370,7 @@ export function SingleCharScreen({ onHome, onProgress }) {
       </div>
 
       {/* Área principal */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px', gap: '32px' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '32px 16px' : '32px 24px', gap: '32px' }}>
 
         {/* IDLE */}
         {sessionState === SC_STATE.IDLE && (
@@ -448,7 +461,7 @@ export function SingleCharScreen({ onHome, onProgress }) {
             {/* Zona central */}
             <div style={{ width: '100%', maxWidth: '400px', minHeight: '180px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               {sessionState === SC_STATE.FEEDBACK ? (
-                <SingleCharFeedback feedback={lastFeedback} settings={settings} />
+                <SingleCharFeedback feedback={lastFeedback} settings={settings} isMobile={isMobile} />
               ) : (
                 <div style={{ textAlign: 'center' }}>
                   {sessionState === SC_STATE.WAITING_INPUT && (
@@ -474,7 +487,7 @@ export function SingleCharScreen({ onHome, onProgress }) {
               — PAUSA —
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button className="btn btn-primary" style={{ padding: '12px 32px' }} onClick={togglePause}>Resumir</button>
+              <button className="btn btn-primary" style={{ padding: '12px 32px' }} onClick={() => { if (isMobile) mobileInputRef.current?.focus(); togglePause(); }}>Resumir</button>
               <button className="btn btn-secondary" onClick={() => { endSession(); onHome(); }}>Terminar</button>
             </div>
           </div>
@@ -497,6 +510,17 @@ export function SingleCharScreen({ onHome, onProgress }) {
             </span>
           ))}
         </div>
+      )}
+
+      {isMobile && (
+        <MobileInputCapture
+          ref={mobileInputRef}
+          enabled={inputEnabled}
+          onChar={(char) => handleKeyPress(char)}
+          onBackspace={() => {}}
+          onConfirm={() => {}}
+          onPause={togglePause}
+        />
       )}
     </div>
   );
