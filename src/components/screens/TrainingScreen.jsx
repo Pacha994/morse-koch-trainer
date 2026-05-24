@@ -13,6 +13,8 @@
  * ─────────────────────────────────────────────────────────────────
  */
 import React, { useEffect, useRef } from 'react';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
+import MobileInputCapture from '../MobileInputCapture';
 import { useAudioPlayer }     from '../../hooks/useAudioPlayer.js';
 import { useTrainingSession, SESSION_STATE } from '../../hooks/useTrainingSession.js';
 import { useKeyboardInput }   from '../../hooks/useKeyboardInput.js';
@@ -34,7 +36,9 @@ export function TrainingScreen({ onHome, onProgress }) {
     startSession, togglePause, endSession, resetSession, confirmInput,
   } = useTrainingSession({ settings, playGroup, stopAudio });
 
+  const isMobile = useMediaQuery('(max-width: 767px)');
   const sessionStartTime = useRef(null);
+  const mobileInputRef = useRef(null);
   const [durationSeconds, setDurationSeconds] = React.useState(0);
 
   // Medir duración real de la sesión (de primer audio a FINISHED)
@@ -49,6 +53,7 @@ export function TrainingScreen({ onHome, onProgress }) {
   }, [sessionState]);
 
   const inputEnabled = sessionState === SESSION_STATE.PLAYING_AUDIO || sessionState === SESSION_STATE.WAITING_INPUT;
+  const mobileInputEnabled = isMobile && (sessionState === SESSION_STATE.PLAYING_AUDIO || sessionState === SESSION_STATE.WAITING_INPUT);
 
   // Ref para leer inputText actual desde callbacks sin stale closure
   const inputTextRef = React.useRef('');
@@ -73,7 +78,7 @@ export function TrainingScreen({ onHome, onProgress }) {
 
   // Inicializar AudioContext (requerido por browsers tras gesto del usuario)
   // y arrancar la sesión desde cero
-  const handleStart = () => { initAudio(); sessionStartTime.current = null; startSession(); };
+  const handleStart = () => { if (isMobile) mobileInputRef.current?.focus(); initAudio(); sessionStartTime.current = null; startSession(); };
 
   if (sessionState === SESSION_STATE.FINISHED && sessionStats) {
     return (
@@ -130,11 +135,11 @@ export function TrainingScreen({ onHome, onProgress }) {
       {/* Topbar */}
       <div style={{
         height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 24px', borderBottom: '1px solid var(--border)', background: 'var(--surface)',
+        padding: isMobile ? '0 12px' : '0 24px', borderBottom: '1px solid var(--border)', background: 'var(--surface)',
         flexShrink: 0,
       }}>
         {/* Tiempo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: '90px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: isMobile ? '60px' : '90px' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '20px', fontWeight: 700, color: timeColor, fontVariantNumeric: 'tabular-nums' }}>
             {mins}:{secs}
           </span>
@@ -152,16 +157,21 @@ export function TrainingScreen({ onHome, onProgress }) {
         </span>
 
         {/* Controles */}
-        <div style={{ display: 'flex', gap: '4px', minWidth: '90px', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: '4px', minWidth: isMobile ? '60px' : '90px', justifyContent: 'flex-end' }}>
           {sessionState !== SESSION_STATE.IDLE ? (
             <>
-              <button className="btn btn-ghost" onClick={togglePause}>
+              <button className="btn btn-ghost" onClick={() => {
+                if (isMobile) {
+                  sessionState === SESSION_STATE.PAUSED ? mobileInputRef.current?.focus() : mobileInputRef.current?.blur();
+                }
+                togglePause();
+              }}>
                 {sessionState === SESSION_STATE.PAUSED ? 'Resumir' : 'Pausa'}
               </button>
               <button className="btn btn-ghost" onClick={() => { endSession(); onHome(); }}>✕</button>
             </>
           ) : (
-            <button className="btn btn-ghost" onClick={onHome}>← Volver</button>
+            <button className="btn btn-ghost" onClick={onHome}>{isMobile ? '←' : '← Volver'}</button>
           )}
         </div>
       </div>
@@ -171,7 +181,7 @@ export function TrainingScreen({ onHome, onProgress }) {
 
         {/* IDLE */}
         {sessionState === SESSION_STATE.IDLE && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', width: '100%', maxWidth: '440px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', width: '100%', maxWidth: isMobile ? undefined : '440px', padding: isMobile ? '0 16px' : undefined }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.2em', color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '4px' }}>
                 {settings.exerciseType === 'custom_string' ? 'Cadena personalizada' : 'Sesión Koch'}
@@ -251,7 +261,7 @@ export function TrainingScreen({ onHome, onProgress }) {
                   <div className={fontSize} style={{ color: 'var(--amber-text)', letterSpacing: '0.3em', textAlign: 'center', minHeight: '2em' }}>
                     {inputText || <span style={{ color: 'var(--text-3)', opacity: 0.3 }} className="cursor-blink">_</span>}
                   </div>
-                  {sessionState === SESSION_STATE.WAITING_INPUT && (
+                  {sessionState === SESSION_STATE.WAITING_INPUT && !isMobile && (
                     <div className="slide-up" style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'var(--text-3)', textAlign: 'center', marginTop: '12px' }}>
                       Tipea lo que escuchaste · Enter para confirmar
                     </div>
@@ -281,7 +291,7 @@ export function TrainingScreen({ onHome, onProgress }) {
               — PAUSA —
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button className="btn btn-primary" style={{ padding: '12px 32px' }} onClick={togglePause}>Resumir</button>
+              <button className="btn btn-primary" style={{ padding: '12px 32px' }} onClick={() => { if (isMobile) mobileInputRef.current?.focus(); togglePause(); }}>Resumir</button>
               <button className="btn btn-secondary" onClick={() => { endSession(); onHome(); }}>Terminar</button>
             </div>
           </div>
@@ -291,7 +301,7 @@ export function TrainingScreen({ onHome, onProgress }) {
       {/* Bottom stats */}
       {isActive && (
         <div style={{
-          height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '28px',
+          height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: isMobile ? '14px' : '28px',
           borderTop: '1px solid var(--border)', background: 'var(--surface)', flexShrink: 0,
         }}>
           {[
@@ -299,11 +309,22 @@ export function TrainingScreen({ onHome, onProgress }) {
             { v: sessionResults.length > 0 ? `${(sessionResults.reduce((s, r) => s + r.accuracy, 0) / sessionResults.length).toFixed(0)}%` : '—', l: 'acc', c: 'var(--amber)' },
             { v: sessionResults.reduce((s, r) => s + r.totalChars, 0), l: 'chars' },
           ].map(({ v, l, c }) => (
-            <span key={l} style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: c ?? 'var(--text-3)' }}>
-              {v} <span style={{ fontFamily: 'var(--font-ui)', fontSize: '11px', color: 'var(--text-3)' }}>{l}</span>
+            <span key={l} style={{ fontFamily: 'var(--font-mono)', fontSize: isMobile ? '11px' : '13px', color: c ?? 'var(--text-3)' }}>
+              {v} <span style={{ fontFamily: 'var(--font-ui)', fontSize: isMobile ? '10px' : '11px', color: 'var(--text-3)' }}>{l}</span>
             </span>
           ))}
         </div>
+      )}
+
+      {isMobile && (
+        <MobileInputCapture
+          ref={mobileInputRef}
+          enabled={mobileInputEnabled}
+          onChar={(char) => setInputText(prev => prev + char)}
+          onBackspace={() => setInputText(prev => prev.slice(0, -1))}
+          onConfirm={confirmInput}
+          onPause={togglePause}
+        />
       )}
     </div>
   );
